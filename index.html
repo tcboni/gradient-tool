@@ -612,7 +612,7 @@ footer .gap{flex:1}
 </main>
 
 <footer>
-  <span><kbd>&#8984;Z</kbd> undo</span>
+  <span><kbd id="undoKey">&#8984;Z</kbd> undo</span>
   <span><kbd>R</kbd> random</span>
   <span><kbd>C</kbd> copy css</span>
   <span><kbd>&#8592;&#8594;</kbd> nudge selected stop</span>
@@ -2173,6 +2173,11 @@ $("#svgBtn").addEventListener("click", () => {
 /* ================================================================
    keyboard shortcuts
 ================================================================ */
+const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+document.getElementById("undoKey").textContent = isMac ? "⌘Z" : "Ctrl+Z";
+document.getElementById("undoBtn").dataset.tip = isMac ? "Undo (⌘Z)" : "Undo (Ctrl+Z)";
+document.getElementById("redoBtn").dataset.tip = isMac ? "Redo (⇧⌘Z)" : "Redo (Ctrl+Shift+Z)";
+
 document.addEventListener("keydown", e => {
   const tag = (e.target.tagName || "").toLowerCase();
   const typing = tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable;
