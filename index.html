@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Gradient Tool — a zero-dependency workbench for building every kind of CSS gradient.">
+<meta name="color-scheme" content="dark">
+<title>Gradient Tool</title>
+<link id="favicon" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ffd23e'/%3E%3Cstop offset='.5' stop-color='%23ff5d8f'/%3E%3Cstop offset='1' stop-color='%234f46ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='1.5' y='1.5' width='29' height='29' rx='7' fill='url(%23g)'/%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   GRADIENT TOOL — instrument-panel aesthetic
+   mono labels, hairline dividers, numbered sections, one accent
+   ============================================================ */
+:root{
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --bg:#131311; --panel:#1a1a18; --panel2:#212120; --well:#0e0e0d;
+  --ink:#e8e5db; --muted:#8f8c81; --line:#2b2b27; --line2:#3d3d36;
+  --acc:#d7ff4f; --acc-ink:#141400;
+  --checker-a:#26262390; --checker-b:#3a3a3590;
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{
+  margin:0; min-height:100%;
+  background:var(--bg);
+  background-image:radial-gradient(var(--line) 1px, transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink);
+  font-family:var(--mono); font-size:13px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+::selection{background:var(--acc);color:var(--acc-ink)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:1px}
+button{font-family:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:12px;color:var(--ink)}
+kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-family:var(--mono);font-size:11px}
+
+.wrap{max-width:1480px;margin:0 auto;padding:18px clamp(10px,2.5vw,28px) 40px}
+
+/* ---------- header ---------- */
+header{display:flex;align-items:center;gap:14px;padding:6px 2px 16px}
+.masthead{flex:1;min-width:0}
+h1{
+  font-family:"Futura","Century Gothic","Avenir Next","URW Gothic",var(--mono),sans-serif;
+  font-weight:600;font-size:clamp(17px,2.2vw,23px);margin:0;
+  letter-spacing:.34em;text-transform:uppercase;line-height:1.1;
+}
+#titleRule{height:3px;max-width:290px;margin-top:6px;border-radius:2px;background:linear-gradient(90deg,#ffd23e,#ff5d8f,#4f46ff)}
+.tagline{color:var(--muted);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;margin-top:6px}
+.headbtns{display:flex;gap:8px;align-items:center}
+.iconbtn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:34px;height:34px;border:1px solid var(--line2);border-radius:4px;
+  background:var(--panel);color:var(--ink);
+}
+.iconbtn:hover{background:var(--ink);color:var(--bg)}
+.iconbtn svg{display:block}
+
+/* ---------- main grid: hairline-divided panels ---------- */
+main{
+  display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:1px;
+  border:1px solid var(--line2);background:var(--line2);
+}
+main>*{background:var(--panel);min-width:0}
+#left{display:flex;flex-direction:column}
+#rail{display:flex;flex-direction:column}
+#out{flex:none}
+
+h2.sec{
+  display:flex;align-items:baseline;gap:10px;margin:0;
+  padding:10px 14px;border-bottom:1px solid var(--line);
+  font-size:10px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);
+}
+h2.sec .num{color:var(--acc);font-weight:700}
+h2.sec .spacer{flex:1}
+.secbody{padding:12px 14px;border-bottom:1px solid var(--line)}
+#rail section:last-child .secbody{border-bottom:0}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.toolbar .gap{flex:1}
+.seg{
+  display:inline-flex;gap:2px;padding:3px;
+  border:1px solid var(--line2);border-radius:6px;background:var(--well);
+}
+.seg button{
+  background:transparent;border:0;border-radius:3px;
+  padding:4px 10px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn{
+  border:1px solid var(--line2);border-radius:4px;background:transparent;
+  padding:6px 11px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn:hover{background:var(--ink);color:var(--bg)}
+/* dim via color, not opacity — opacity creates a stacking context that traps tooltips */
+.btn:disabled{color:var(--line2);border-color:var(--line);cursor:default}
+.btn:disabled:hover{background:transparent;color:var(--line2)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn svg{display:block;width:16px;height:16px;flex:none}
+.btn.icon{padding:6px 8px}
+input[type="color"].bgpick{
+  width:34px;height:28px;padding:0;border:1px solid var(--line2);border-radius:4px;background:none;cursor:pointer;
+}
+
+/* ---------- custom tooltips (pure CSS anchor positioning) ---------- */
+@supports (position-area: top){
+  [data-tip]::after{
+    content:attr(data-tip);
+    position:fixed;
+    position-anchor:auto;
+    position-area:top;
+    position-try-fallbacks:flip-block;
+    justify-self:anchor-center;
+    margin:7px;
+    width:max-content;max-width:250px;white-space:normal;
+    background:var(--ink);color:var(--bg);
+    border-radius:4px;padding:5px 9px;
+    font:500 10.5px/1.45 var(--mono);letter-spacing:.04em;text-transform:none;text-align:left;
+    box-shadow:0 6px 22px -6px rgba(0,0,0,.7);
+    opacity:0;pointer-events:none;
+    z-index:120;
+  }
+  [data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1}
+  [data-tip]:active::after{opacity:0}
+}
+.info{border-bottom:1px dotted var(--muted);cursor:help}
+
+/* ---------- stage / preview ---------- */
+#stage{
+  position:relative;margin:14px;flex:1 1 auto;min-height:300px;
+  border:1px solid var(--line2);overflow:hidden;background:var(--panel2);
+}
+/* viewfinder corner brackets */
+.corner{position:absolute;width:14px;height:14px;border:2px solid var(--muted);z-index:5;pointer-events:none}
+.corner.tl{top:6px;left:6px;border-right:0;border-bottom:0}
+.corner.tr{top:6px;right:6px;border-left:0;border-bottom:0}
+.corner.bl{bottom:6px;left:6px;border-right:0;border-top:0}
+.corner.br{bottom:6px;right:6px;border-left:0;border-top:0}
+.pv{position:absolute;inset:0;display:none}
+.pv.on{display:flex;align-items:center;justify-content:center}
+#pv-text span{
+  font-family:var(--serif);font-weight:600;
+  font-size:clamp(36px,8vw,110px);line-height:1.15;padding:0 .3em;
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  outline:none;text-align:center;
+}
+#pv-border .borderbox{
+  width:min(420px,72%);height:min(240px,60%);border-radius:10px;
+  border:10px solid transparent;
+  display:flex;align-items:center;justify-content:center;
+}
+#pv-border .borderbox span{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+#crosshair{
+  position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  border:2px solid #fff;box-shadow:0 0 0 1.5px #000a, inset 0 0 0 1.5px #000a;
+  display:none;z-index:6;cursor:move;touch-action:none;
+}
+#crosshair::after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px #000a}
+#stage.centerdrag #pv-fill{cursor:crosshair}
+
+/* ---------- output ---------- */
+#code{
+  margin:0;padding:14px;background:var(--well);
+  font-size:12px;line-height:1.65;overflow:auto;white-space:pre;
+  border:1px solid var(--line);border-radius:4px;
+  height:232px;
+  tab-size:2;
+}
+#code .tok-c{color:var(--muted)}
+#code .tok-n{color:var(--acc)}
+#code .sw{
+  display:inline-block;width:9px;height:9px;margin-right:5px;border-radius:2px;
+  outline:1px solid var(--line2);vertical-align:baseline;
+}
+.outbtns{display:flex;flex-wrap:wrap;gap:6px;padding:12px 14px 14px}
+#out .secbody{padding:12px 14px 0}
+.fmtsel{margin-left:auto}
+
+/* ---------- fields ---------- */
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+.row:last-child{margin-bottom:0}
+.field{display:inline-flex;align-items:center;gap:6px}
+.field>label,.lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+input[type="number"],input[type="text"],select,textarea{
+  background:var(--well);border:1px solid var(--line2);border-radius:3px;
+  padding:5px 7px;
+}
+input[type="number"]{width:60px}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield}
+input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
+input[type="color"]::-webkit-color-swatch{border:none;border-radius:2px}
+input[type="color"]::-moz-color-swatch{border:none;border-radius:2px}
+select{padding:5px 4px}
+input[type="range"]{
+  -webkit-appearance:none;appearance:none;height:22px;background:transparent;vertical-align:middle;
+}
+input[type="range"]::-webkit-slider-runnable-track{height:2px;background:var(--line2)}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:12px;height:12px;margin-top:-5px;border-radius:2px;
+  background:var(--ink);border:1px solid var(--bg);
+}
+input[type="range"]::-moz-range-track{height:2px;background:var(--line2)}
+input[type="range"]::-moz-range-thumb{width:11px;height:11px;border-radius:2px;background:var(--ink);border:1px solid var(--bg)}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.chk input{accent-color:var(--acc)}
+.hide{display:none !important}
+
+/* ---------- dial ---------- */
+.dial{width:74px;height:74px;flex:none;cursor:grab;touch-action:none;border-radius:50%}
+.dial:active{cursor:grabbing}
+.dial svg{display:block;width:100%;height:100%}
+.dial .ring{stroke:var(--line2);fill:var(--well)}
+.dial .tick{stroke:var(--muted)}
+.dial .needle{stroke:var(--acc);stroke-width:2.5;stroke-linecap:round}
+.dial .hub{fill:var(--ink)}
+
+/* ---------- layers ---------- */
+#layers{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:4px}
+.layerrow{
+  display:flex;align-items:center;gap:7px;padding:5px 7px;
+  border:1px solid var(--line);border-radius:4px;background:var(--panel2);cursor:pointer;
+}
+.layerrow.is-active{border-color:var(--acc);box-shadow:inset 2px 0 0 var(--acc)}
+.layerrow .lthumb{width:34px;height:22px;border-radius:3px;outline:1px solid var(--line2);flex:none;
+  background-color:var(--well)}
+.layerrow .lname{flex:1;font-size:11px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.layerrow .lname small{color:var(--muted)}
+.lbtn{border:0;background:transparent;color:var(--muted);padding:3px;border-radius:3px;line-height:0}
+.lbtn svg{width:16px;height:16px;display:block}
+.lbtn:hover{color:var(--ink);background:var(--line)}
+.lbtn[aria-pressed="false"]{color:var(--line2)}
+
+/* ---------- stops ---------- */
+.trackwrap{position:relative;padding:12px 8px 30px;margin-bottom:8px}
+#track{
+  position:relative;height:36px;border:1px solid var(--line2);border-radius:3px;cursor:copy;
+  background-color:var(--well);
+}
+.handle{
+  position:absolute;top:calc(100% + 3px);width:16px;height:20px;margin-left:-8px;
+  border:1.5px solid var(--ink);border-radius:0 0 3px 3px;background:#888;padding:0;
+  clip-path:polygon(50% 0,100% 30%,100% 100%,0 100%,0 30%);
+  touch-action:none;
+}
+.handle.is-sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.hint{
+  position:absolute;top:-7px;width:10px;height:10px;margin-left:-5px;padding:0;
+  background:var(--panel);border:1.5px solid var(--muted);transform:rotate(45deg);
+  touch-action:none;
+}
+.hint:hover,.hint:focus-visible{border-color:var(--acc)}
+#stoprows{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+.stoprow{
+  display:grid;grid-template-columns:34px minmax(70px,1fr) auto auto auto auto;gap:7px;align-items:center;
+  padding:4px 6px;border:1px solid var(--line);border-radius:4px;
+}
+.stoprow.is-sel{border-color:var(--acc)}
+.stoprow input[type="color"]{
+  width:34px;height:26px;padding:0;border:1px solid var(--line2);border-radius:3px;background:none;cursor:pointer;
+}
+.stoprow .hexin{width:100%;text-transform:lowercase}
+.stoprow .mini{display:inline-flex;align-items:center;gap:4px}
+.stoprow .mini .lbl{text-transform:none}
+.stoprow .mini input{width:42px;text-align:right}
+.stoprow .del{border:0;background:none;color:var(--muted);padding:3px;line-height:0}
+.stoprow .del svg{width:15px;height:15px;display:block}
+.stoprow .del:hover{color:#ff5d5d}
+.stoptools{display:flex;flex-wrap:wrap;gap:6px}
+
+/* ---------- effects ---------- */
+.fx{display:grid;grid-template-columns:74px 1fr 44px 18px;align-items:center;gap:9px;margin-bottom:9px}
+.fx input[type="range"]{width:100%}
+.fx .val{text-align:right;color:var(--ink);text-transform:none}
+.fx .chk{white-space:nowrap}
+.fxclear{justify-self:end}
+.fxclear svg{width:13px;height:13px}
+.fxclear:disabled{color:var(--line);cursor:default}
+.fxclear:disabled:hover{color:var(--line);background:none}
+.fxdivider{margin:14px 0 9px;padding-top:11px;border-top:1px solid var(--line)}
+#tileWVal,#tileHVal{text-transform:none}
+
+/* ---------- xy pad ----------
+   guide lines are background gradients, NOT ::before/::after —
+   the ::after slot belongs to the [data-tip] tooltip */
+.pad{
+  width:56px;height:56px;flex:none;position:relative;
+  background-color:var(--well);
+  background-image:linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line));
+  background-size:1px calc(100% - 8px),calc(100% - 8px) 1px;
+  background-position:center,center;background-repeat:no-repeat;
+  border:1px solid var(--line2);border-radius:4px;
+  cursor:crosshair;touch-action:none;
+}
+.pad .paddot{
+  position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;
+  background:var(--acc);border:1.5px solid var(--bg);box-shadow:0 0 0 1px var(--line2);
+  pointer-events:none;z-index:1;
+}
+.padnums{display:flex;flex-direction:column;gap:6px}
+
+/* ---------- presets ---------- */
+#presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
+.preset{border:1px solid var(--line2);border-radius:4px;background:none;padding:3px;display:block}
+.preset:hover{border-color:var(--ink)}
+.preset .pthumb{display:block;height:40px;border-radius:2px;background-color:var(--well)}
+.preset .pname{display:block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- dialog / toast / footer ---------- */
+dialog{
+  background:var(--panel);color:var(--ink);border:1px solid var(--line2);border-radius:6px;
+  padding:0;max-width:560px;width:92vw;
+}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+dialog h3{margin:0;padding:12px 16px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+dialog .dbody{padding:14px 16px}
+dialog textarea{width:100%;min-height:130px;resize:vertical;font-size:12px;line-height:1.5}
+dialog .dbtns{display:flex;justify-content:flex-end;gap:8px;padding:0 16px 14px}
+#toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);
+  background:var(--ink);color:var(--bg);padding:7px 14px;border-radius:4px;
+  font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:99;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{
+  display:flex;flex-wrap:wrap;gap:6px 20px;align-items:center;
+  padding:16px 4px 0;color:var(--muted);font-size:11px;
+}
+footer .gap{flex:1}
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important;animation:none !important}
+}
+@media (max-width:980px){
+  main{grid-template-columns:1fr}
+  #stage{min-height:clamp(240px,42vh,420px);flex:0 0 auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="masthead">
+    <h1>Gradient Tool</h1>
+    <div id="titleRule" aria-hidden="true"></div>
+    <div class="tagline">css gradient workbench</div>
+  </div>
+  <div class="headbtns">
+    <a class="iconbtn" href="https://github.com/tcboni/gradient-tool" target="_blank" rel="noopener" data-tip="View source on GitHub" aria-label="View source on GitHub">
+      <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+      </svg>
+    </a>
+  </div>
+</header>
+
+<main>
+  <!-- ==================== LEFT: preview + output ==================== -->
+  <section id="left" aria-label="Preview and output">
+    <div class="toolbar" role="toolbar" aria-label="Preview options">
+      <div class="seg" role="group" aria-label="Preview mode" id="modeSeg">
+        <button data-mode="fill" aria-pressed="true">Fill</button>
+        <button data-mode="text" aria-pressed="false">Text</button>
+        <button data-mode="border" aria-pressed="false">Border</button>
+      </div>
+      <label class="field" data-tip="Background color behind the gradient — matters when stops use opacity">
+        <span class="lbl">bg</span>
+        <input type="color" class="bgpick" id="bgIn" value="#131311" aria-label="Preview background color">
+      </label>
+      <div class="gap"></div>
+      <button class="btn icon" id="undoBtn" data-tip="Undo (&#8984;Z)" aria-label="Undo">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h6a3.5 3.5 0 0 1 0 7H6"/><path d="M6.5 3.5l-3 3 3 3"/></svg>
+      </button>
+      <button class="btn icon" id="redoBtn" data-tip="Redo (&#8679;&#8984;Z)" aria-label="Redo">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.5 6.5h-6a3.5 3.5 0 0 0 0 7H10"/><path d="M9.5 3.5l3 3-3 3"/></svg>
+      </button>
+      <button class="btn" id="randomBtn" data-tip="Random gradient (R)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2.5"/><g fill="currentColor" stroke="none"><circle cx="5.4" cy="5.4" r="1.15"/><circle cx="10.6" cy="5.4" r="1.15"/><circle cx="8" cy="8" r="1.15"/><circle cx="5.4" cy="10.6" r="1.15"/><circle cx="10.6" cy="10.6" r="1.15"/></g></svg>
+        Random
+      </button>
+    </div>
+
+    <div id="stage">
+      <div class="pv on" id="pv-fill" aria-label="Gradient preview"></div>
+      <div class="pv" id="pv-text"><span contenteditable="true" spellcheck="false" aria-label="Editable preview text">Hello world!</span></div>
+      <div class="pv" id="pv-border"><div class="borderbox"><span>gradient border</span></div></div>
+      <div id="crosshair" role="slider" tabindex="0" aria-label="Gradient center position" aria-valuemin="0" aria-valuemax="100"></div>
+      <div class="corner tl" aria-hidden="true"></div><div class="corner tr" aria-hidden="true"></div>
+      <div class="corner bl" aria-hidden="true"></div><div class="corner br" aria-hidden="true"></div>
+    </div>
+
+    <section id="out" aria-label="CSS output">
+      <h2 class="sec">Output
+        <span class="spacer"></span>
+        <label class="field fmtsel"><span class="lbl">colors</span>
+          <select id="fmtSel" aria-label="Color output format">
+            <option value="hex">hex</option><option value="rgb">rgb</option>
+            <option value="hsl">hsl</option><option value="oklch">oklch</option>
+          </select>
+        </label>
+      </h2>
+      <div class="secbody">
+        <pre id="code" tabindex="0" aria-label="Generated CSS"></pre>
+      </div>
+      <div class="outbtns">
+        <button class="btn primary" id="copyCssBtn">Copy CSS</button>
+        <button class="btn" id="copyValBtn" data-tip="Copy the background-image value only">Copy value</button>
+        <button class="btn" id="importBtn" data-tip="Paste existing CSS and edit it here">Import</button>
+        <button class="btn" id="shareBtn" data-tip="Copy a link that restores this exact gradient">Share link</button>
+        <button class="btn" id="pngBtn" data-tip="Download a rendered PNG (sRGB approximation)">PNG &#x2193;</button>
+        <button class="btn" id="svgBtn" data-tip="Download as SVG (linear/radial layers)">SVG &#x2193;</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- ==================== RIGHT: controls rail ==================== -->
+  <aside id="rail" aria-label="Gradient controls">
+
+    <section aria-label="Layers">
+      <h2 class="sec"><span class="num">01</span> Layers</h2>
+      <div class="secbody">
+        <ul id="layers"></ul>
+        <div class="row">
+          <button class="btn" id="addLayerBtn">+ Add layer</button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Geometry">
+      <h2 class="sec"><span class="num">02</span> Geometry</h2>
+      <div class="secbody">
+        <div class="row">
+          <div class="seg" role="group" aria-label="Gradient type" id="typeSeg">
+            <button data-type="linear" aria-pressed="true">Linear</button>
+            <button data-type="radial" aria-pressed="false">Radial</button>
+            <button data-type="conic" aria-pressed="false">Conic</button>
+          </div>
+          <label class="chk"><input type="checkbox" id="repChk"> repeat</label>
+        </div>
+
+        <div class="row" data-show="linear">
+          <div class="dial" id="dialA" role="slider" tabindex="0" aria-label="Gradient angle" aria-valuemin="0" aria-valuemax="360" data-tip="Drag or use arrow keys to set the angle — hold Shift to snap to 15&deg; steps."></div>
+          <label class="field"><span class="lbl">angle</span><input type="number" id="angleIn" step="1" aria-label="Angle in degrees"><span class="lbl">deg</span></label>
+        </div>
+
+        <div class="row" data-show="conic">
+          <div class="dial" id="dialB" role="slider" tabindex="0" aria-label="Conic start angle" aria-valuemin="0" aria-valuemax="360" data-tip="Drag or use arrow keys to set the start angle — hold Shift to snap to 15&deg; steps."></div>
+          <label class="field"><span class="lbl">from</span><input type="number" id="fromIn" step="1" aria-label="Start angle in degrees"><span class="lbl">deg</span></label>
+        </div>
+
+        <div class="row" data-show="radial">
+          <label class="field"><span class="lbl">shape</span>
+            <select id="shapeSel" aria-label="Radial shape"><option>ellipse</option><option>circle</option></select>
+          </label>
+          <label class="field"><span class="lbl">size</span>
+            <select id="sizeSel" aria-label="Radial size">
+              <option>farthest-corner</option><option>farthest-side</option>
+              <option>closest-corner</option><option>closest-side</option>
+              <option value="custom">custom&hellip;</option>
+            </select>
+          </label>
+          <input type="text" id="sizeCustomIn" class="hide" placeholder="e.g. 60% 40% or 180px" style="width:130px" aria-label="Custom radial size">
+        </div>
+
+        <div class="row" data-show="radial conic">
+          <div class="pad" id="posPad" tabindex="0" role="slider" aria-label="Gradient center position (arrow keys to nudge)" aria-valuemin="0" aria-valuemax="100" data-tip="Drag to place the center — or drag directly on the preview. Shift snaps to quarters."></div>
+          <div class="padnums">
+            <label class="field"><span class="lbl">x</span><input type="number" id="posXNum" min="0" max="100" aria-label="Center X percent"><span class="lbl">%</span></label>
+            <label class="field"><span class="lbl">y</span><input type="number" id="posYNum" min="0" max="100" aria-label="Center Y percent"><span class="lbl">%</span></label>
+          </div>
+        </div>
+
+        <div class="row">
+          <label class="field"><span class="lbl info" tabindex="0" data-tip="Color space used to blend between stops. oklch/oklab avoid muddy gray midpoints; polar spaces (oklch, hsl&hellip;) also unlock the hue path option.">mix in</span>
+            <select id="spaceSel" aria-label="Color interpolation space">
+              <option value="default">browser default</option>
+              <option value="oklab">oklab</option><option value="oklch">oklch</option>
+              <option value="srgb">srgb</option><option value="srgb-linear">srgb-linear</option>
+              <option value="lab">lab</option><option value="lch">lch</option>
+              <option value="hsl">hsl</option><option value="hwb">hwb</option>
+            </select>
+          </label>
+          <label class="field hide" id="hueWrap"><span class="lbl info" tabindex="0" data-tip="Which way around the color wheel the blend travels: shorter takes the direct route, longer goes the scenic way through every hue in between.">hue</span>
+            <select id="hueSel" aria-label="Hue interpolation method">
+              <option value="shorter">shorter</option><option value="longer">longer</option>
+              <option value="increasing">increasing</option><option value="decreasing">decreasing</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <label class="field"><span class="lbl info" tabindex="0" data-tip="background-blend-mode: how this layer's pixels mix with the layers underneath it (multiply darkens, screen lightens, etc). Only visible with 2+ layers.">blend</span>
+            <select id="blendSel" aria-label="Layer blend mode">
+              <option>normal</option><option>multiply</option><option>screen</option><option>overlay</option>
+              <option>darken</option><option>lighten</option><option>color-dodge</option><option>color-burn</option>
+              <option>hard-light</option><option>soft-light</option><option>difference</option><option>exclusion</option>
+              <option>hue</option><option>saturation</option><option>color</option><option>luminosity</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <label class="chk" data-tip="Repeats the layer as a small tile (background-size) — turns a conic into a checkerboard, a radial into polka dots"><input type="checkbox" id="tileChk"> tile</label>
+          <button class="btn icon hide" id="tileLinkBtn" aria-pressed="true" data-tip="Link width &amp; height (square tile)" aria-label="Link tile width and height">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6.5 9.5l3-3"/><path d="M7 4.5l1-1a2.83 2.83 0 0 1 4 4l-1 1"/><path d="M9 11.5l-1 1a2.83 2.83 0 0 1-4-4l1-1"/></svg>
+          </button>
+        </div>
+        <div class="row hide" id="tileWRow">
+          <label class="field"><span class="lbl" id="tileWLbl">size</span>
+            <input type="range" id="tileWIn" min="8" max="320" step="4" value="64" style="width:130px" aria-label="Tile width">
+            <span class="lbl" id="tileWVal">64px</span>
+          </label>
+        </div>
+        <div class="row hide" id="tileHRow">
+          <label class="field"><span class="lbl">h</span>
+            <input type="range" id="tileHIn" min="8" max="320" step="4" value="64" style="width:130px" aria-label="Tile height">
+            <span class="lbl" id="tileHVal">64px</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Color stops">
+      <h2 class="sec"><span class="num">03</span> Color stops</h2>
+      <div class="secbody">
+        <div class="trackwrap" data-tip="Click an empty spot to add a stop &middot; drag the &#x25C6; diamonds to skew blend midpoints">
+          <div id="track" aria-label="Color stop track"></div>
+        </div>
+        <div id="stoprows"></div>
+        <div class="stoptools">
+          <button class="btn" id="addStopBtn" data-tip="Add a stop in the widest gap (or just click the track)">+ Stop</button>
+          <button class="btn" id="revBtn" data-tip="Reverse stop order">Reverse</button>
+          <button class="btn" id="evenBtn" data-tip="Distribute stops evenly">Distribute</button>
+          <button class="btn" id="posterBtn" data-tip="Convert to hard color bands">Posterize</button>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Effects">
+      <h2 class="sec"><span class="num">04</span> Effects
+        <span class="spacer"></span>
+        <button class="btn" id="fxReset" style="padding:2px 8px;font-size:9px" data-tip="Reset all effects to defaults">reset</button>
+      </h2>
+      <div class="secbody">
+        <div class="fx" data-tip="Film-grain noise overlay (an inline SVG turbulence layer, included in the CSS output)">
+          <span class="lbl">grain</span>
+          <input type="range" id="grainIn" min="0" max="100" value="0" aria-label="Film grain amount">
+          <span class="lbl val" id="grainVal">0</span>
+          <button class="lbtn fxclear" data-key="grain" data-def="0" aria-label="Reset grain"></button>
+        </div>
+        <div class="fx" data-tip="Darkens the corners with a radial overlay layer">
+          <span class="lbl">vignette</span>
+          <input type="range" id="vigIn" min="0" max="100" value="0" aria-label="Vignette amount">
+          <span class="lbl val" id="vigVal">0</span>
+          <button class="lbtn fxclear" data-key="vignette" data-def="0" aria-label="Reset vignette"></button>
+        </div>
+        <div class="fx" data-tip="Rotates every hue in the gradient (CSS filter)">
+          <span class="lbl">hue shift</span>
+          <input type="range" id="hueIn" min="0" max="360" value="0" aria-label="Hue rotation in degrees">
+          <span class="lbl val" id="hueVal">0&deg;</span>
+          <button class="lbtn fxclear" data-key="hueRot" data-def="0" aria-label="Reset hue shift"></button>
+        </div>
+        <div class="fx" data-tip="Saturation (CSS filter) — 0% is grayscale, 200% doubles the color intensity">
+          <span class="lbl">saturate</span>
+          <input type="range" id="satIn" min="0" max="200" value="100" aria-label="Saturation percent">
+          <span class="lbl val" id="satVal">100%</span>
+          <button class="lbtn fxclear" data-key="sat" data-def="100" aria-label="Reset saturation"></button>
+        </div>
+        <div class="fx" data-tip="Brightness (CSS filter)">
+          <span class="lbl">brighten</span>
+          <input type="range" id="briIn" min="0" max="200" value="100" aria-label="Brightness percent">
+          <span class="lbl val" id="briVal">100%</span>
+          <button class="lbtn fxclear" data-key="bright" data-def="100" aria-label="Reset brightness"></button>
+        </div>
+
+        <div class="fxdivider lbl">animation</div>
+        <div class="fx" data-tip="Spins linear/conic gradient angles via a registered @property — keyframes land in the CSS output">
+          <label class="chk"><input type="checkbox" id="aRotChk"> rotate</label>
+          <input type="range" id="aRotSpd" min="2" max="30" step="1" value="8" aria-label="Rotate duration in seconds">
+          <span class="lbl val" id="aRotSpdVal">8s</span>
+        </div>
+        <div class="fx" data-tip="Scrolls the gradient forward forever — animates one full period of a 200%-sized background, so it loops seamlessly (overrides tiling)">
+          <label class="chk"><input type="checkbox" id="aPanChk"> pan</label>
+          <input type="range" id="aPanSpd" min="2" max="30" step="1" value="8" aria-label="Pan duration in seconds">
+          <span class="lbl val" id="aPanSpdVal">8s</span>
+        </div>
+        <div class="fx" data-tip="Loops the whole palette around the color wheel with an animated hue-rotate filter">
+          <label class="chk"><input type="checkbox" id="aHueChk"> hue cycle</label>
+          <input type="range" id="aHueSpd" min="2" max="30" step="1" value="8" aria-label="Hue cycle duration in seconds">
+          <span class="lbl val" id="aHueSpdVal">8s</span>
+        </div>
+      </div>
+    </section>
+
+    <section aria-label="Presets">
+      <h2 class="sec"><span class="num">05</span> Presets</h2>
+      <div class="secbody">
+        <div id="presets"></div>
+      </div>
+    </section>
+
+  </aside>
+</main>
+
+<footer>
+  <span><kbd>&#8984;Z</kbd> undo</span>
+  <span><kbd>R</kbd> random</span>
+  <span><kbd>C</kbd> copy css</span>
+  <span><kbd>&#8592;&#8594;</kbd> nudge selected stop</span>
+  <span class="gap"></span>
+  <span>state autosaves locally</span>
+</footer>
+
+</div>
+
+<dialog id="importDlg">
+  <h3>Import CSS gradient</h3>
+  <div class="dbody">
+    <textarea id="importTa" placeholder="Paste anything: linear-gradient(...), a whole background: line, even multiple stacked layers." aria-label="CSS to import"></textarea>
+  </div>
+  <div class="dbtns">
+    <button class="btn" id="importCancel">Cancel</button>
+    <button class="btn primary" id="importGo">Parse &amp; load</button>
+  </div>
+</dialog>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<noscript><p style="padding:20px">Gradient Tool needs JavaScript to run.</p></noscript>
+
+<script>
+"use strict";
+/* ================================================================
+   helpers
+================================================================ */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const fx = n => String(Math.round(n * 100) / 100);
+const fx3 = n => String(Math.round(n * 1000) / 1000);
+const deepCopy = o => JSON.parse(JSON.stringify(o));
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/* inline svg icons for dynamically-built controls */
+const ICONS = {
+  eye: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z"/><circle cx="8" cy="8" r="2"/></svg>',
+  eyeOff: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8Z" opacity=".45"/><path d="M2.5 13.5l11-11" stroke-linecap="round"/></svg>',
+  up: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V3.5M4.5 7 8 3.5 11.5 7"/></svg>',
+  down: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v9.5M4.5 9 8 12.5 11.5 9"/></svg>',
+  dup: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M3 10.5v-6A1.5 1.5 0 0 1 4.5 3h6"/></svg>',
+  x: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  dropper: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 2.6a2 2 0 0 1 3.1 2.5l-.9 1.2-3-3zM9.2 4.6l2.2 2.2-5.6 5.6-2.7.7.7-2.7z"/></svg>'
+};
+
+/* split a string on a separator, ignoring separators inside (...) */
+function splitTop(s, sep) {
+  const out = []; let depth = 0, cur = "";
+  for (const ch of s) {
+    if (ch === "(") depth++;
+    else if (ch === ")") depth--;
+    if (ch === sep && depth === 0) { out.push(cur.trim()); cur = ""; }
+    else cur += ch;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+/* ================================================================
+   color math  (hex / rgb / hsl / oklch)
+================================================================ */
+function hexToRgb(hex) {
+  let h = hex.replace("#", "");
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+}
+const c2 = v => clamp(Math.round(v), 0, 255).toString(16).padStart(2, "0");
+const rgbToHex = (r, g, b) => "#" + c2(r) + c2(g) + c2(b);
+const alphaHex = a => c2(a * 255);
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  const l = (mx + mn) / 2;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  if (d !== 0) {
+    if (mx === r) h = 60 * (((g - b) / d) % 6);
+    else if (mx === g) h = 60 * ((b - r) / d + 2);
+    else h = 60 * ((r - g) / d + 4);
+  }
+  return [(h + 360) % 360, s * 100, l * 100];
+}
+
+function srgbToLinear(c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+function linearToSrgb(c) { const v = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; return clamp(Math.round(v * 255), 0, 255); }
+
+function rgbToOklch(r, g, b) {
+  const lr = srgbToLinear(r), lg = srgbToLinear(g), lb = srgbToLinear(b);
+  const l = Math.cbrt(0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb);
+  const m = Math.cbrt(0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb);
+  const s = Math.cbrt(0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb);
+  const L = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+  const A = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+  const B = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
+  const C = Math.hypot(A, B);
+  const H = (Math.atan2(B, A) * 180 / Math.PI + 360) % 360;
+  return [L, C, H];
+}
+function oklchToRgb(L, C, H) {
+  const hr = H * Math.PI / 180;
+  const A = C * Math.cos(hr), B = C * Math.sin(hr);
+  const l = Math.pow(L + 0.3963377774 * A + 0.2158037573 * B, 3);
+  const m = Math.pow(L - 0.1055613458 * A - 0.0638541728 * B, 3);
+  const s = Math.pow(L - 0.0894841775 * A - 1.2914855480 * B, 3);
+  const lr = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  const lg = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  const lb = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
+  return { r: linearToSrgb(lr), g: linearToSrgb(lg), b: linearToSrgb(lb), out: lr < -0.001 || lr > 1.001 || lg < -0.001 || lg > 1.001 || lb < -0.001 || lb > 1.001 };
+}
+/* oklch -> hex, pulling chroma into gamut if needed */
+function oklchHex(L, C, H) {
+  let c = C, res = oklchToRgb(L, c, H), i = 0;
+  while (res.out && i++ < 20) { c *= 0.88; res = oklchToRgb(L, c, H); }
+  return rgbToHex(res.r, res.g, res.b);
+}
+
+/* ================================================================
+   state
+================================================================ */
+const POLAR = ["hsl", "hwb", "lch", "oklch"];
+const stop = (hex, pos, a = 1, hint = 50) => ({ hex, a, pos, hint });
+function defaultLayer(over) {
+  return Object.assign({
+    type: "linear", repeating: false,
+    angle: 168, from: 0, x: 50, y: 50,
+    shape: "ellipse", size: "farthest-corner", sizeCustom: "",
+    space: "default", hue: "shorter",
+    blend: "normal", tile: "", visible: true,
+    stops: [stop("#ffe9a7", 0), stop("#ffab76", 48), stop("#ff5d8f", 100)]
+  }, over || {});
+}
+function defaultState() {
+  return {
+    layers: [defaultLayer()], active: 0, sel: 0,
+    mode: "fill", bg: "#131311", fmt: "hex",
+    grain: 0, vignette: 0, hueRot: 0, sat: 100, bright: 100,
+    aRot: false, aRotSpd: 8, aPan: false, aPanSpd: 8, aHue: false, aHueSpd: 8
+  };
+}
+let state = defaultState();
+
+/* ================================================================
+   presets
+================================================================ */
+const PRESETS = [
+  { name: "Dawn", layers: [defaultLayer()] },
+  { name: "Deep field", layers: [defaultLayer({ type: "radial", shape: "circle", x: 68, y: 22,
+    stops: [stop("#2c55a8", 0), stop("#101f45", 55), stop("#05070f", 100)] })] },
+  { name: "Verdant", layers: [defaultLayer({ angle: 135, space: "oklch",
+    stops: [stop("#e9f5c6", 0), stop("#5db47d", 55), stop("#0d5c46", 100)] })] },
+  { name: "Heat", layers: [defaultLayer({ angle: 90, space: "oklch", hue: "longer",
+    stops: [stop("#ffd23e", 0), stop("#ff2d55", 100)] })] },
+  { name: "Spectrum", layers: [defaultLayer({ angle: 90, space: "hsl", hue: "longer",
+    stops: [stop("#ff0040", 0), stop("#ff0040", 100)] })] },
+  { name: "Solar loop", layers: [defaultLayer({ type: "conic", space: "oklch",
+    stops: [stop("#ffd23e", 0), stop("#ff8a3d", 25), stop("#e0417f", 55), stop("#7a3bd8", 80), stop("#ffd23e", 100)] })] },
+  { name: "Candy", layers: [defaultLayer({ angle: 45, repeating: true,
+    stops: [stop("#ff5d8f", 0), stop("#ff5d8f", 4), stop("#fff1e6", 4), stop("#fff1e6", 8)] })] },
+  { name: "Sunburst", layers: [defaultLayer({ type: "conic", repeating: true,
+    stops: [stop("#f5e9d4", 0), stop("#f5e9d4", 5), stop("#e8503a", 5), stop("#e8503a", 10)] })] },
+  { name: "Checker", layers: [defaultLayer({ type: "conic", tile: "48px 48px",
+    stops: [stop("#1b1b19", 0), stop("#1b1b19", 25), stop("#e8e5db", 25), stop("#e8e5db", 50),
+            stop("#1b1b19", 50), stop("#1b1b19", 75), stop("#e8e5db", 75), stop("#e8e5db", 100)] })] },
+  { name: "Polka", layers: [defaultLayer({ type: "radial", size: "custom", sizeCustom: "6px", tile: "30px 30px",
+    stops: [stop("#1b1b19", 0), stop("#1b1b19", 80), stop("#1b1b19", 100, 0)] })] },
+  { name: "Aurora", layers: [
+    defaultLayer({ type: "radial", size: "farthest-side", x: 18, y: 8, blend: "screen",
+      stops: [stop("#4fffc8", 0, 0.55), stop("#4fffc8", 62, 0)] }),
+    defaultLayer({ type: "radial", size: "farthest-side", x: 84, y: 20, blend: "screen",
+      stops: [stop("#7aa8ff", 0, 0.5), stop("#7aa8ff", 58, 0)] }),
+    defaultLayer({ angle: 180, stops: [stop("#050816", 0), stop("#131240", 62), stop("#2b1a52", 100)] })
+  ] },
+  { name: "Mesh", layers: [
+    defaultLayer({ type: "radial", x: 12, y: 14, size: "farthest-side", stops: [stop("#ffc6d9", 0, 0.9), stop("#ffc6d9", 62, 0)] }),
+    defaultLayer({ type: "radial", x: 88, y: 22, size: "farthest-side", stops: [stop("#bfe3ff", 0, 0.9), stop("#bfe3ff", 60, 0)] }),
+    defaultLayer({ type: "radial", x: 24, y: 88, size: "farthest-side", stops: [stop("#ffe6b3", 0, 0.9), stop("#ffe6b3", 60, 0)] }),
+    defaultLayer({ type: "radial", x: 82, y: 84, size: "farthest-side", stops: [stop("#d3c4ff", 0, 0.9), stop("#d3c4ff", 62, 0)] }),
+    defaultLayer({ angle: 180, stops: [stop("#ffffff", 0), stop("#f3f1fa", 100)] })
+  ] },
+  { name: "Ink wash", layers: [defaultLayer({ angle: 180,
+    stops: [stop("#161616", 0, 1, 32), stop("#6d6d68", 55, 1, 60), stop("#e9e6dc", 100)] })] },
+  { name: "Film", grain: 42, layers: [defaultLayer({ angle: 160,
+    stops: [stop("#2b2620", 0), stop("#6b5340", 60), stop("#a98a63", 100)] })] }
+];
+
+/* ================================================================
+   css generation
+================================================================ */
+function interpCSS(l) {
+  if (l.space === "default") return "";
+  const polar = POLAR.includes(l.space);
+  return " in " + l.space + (polar && l.hue !== "shorter" ? " " + l.hue + " hue" : "");
+}
+function colorStr(s, fmt) {
+  const { r, g, b } = hexToRgb(s.hex);
+  const a = s.a == null ? 1 : s.a;
+  if (fmt === "rgb") return a < 1 ? "rgba(" + r + ", " + g + ", " + b + ", " + fx(a) + ")" : "rgb(" + r + ", " + g + ", " + b + ")";
+  if (fmt === "hsl") {
+    const [h, sl, li] = rgbToHsl(r, g, b);
+    return a < 1 ? "hsla(" + fx(h) + ", " + fx(sl) + "%, " + fx(li) + "%, " + fx(a) + ")" : "hsl(" + fx(h) + ", " + fx(sl) + "%, " + fx(li) + "%)";
+  }
+  if (fmt === "oklch") {
+    const [L, C, H] = rgbToOklch(r, g, b);
+    return "oklch(" + fx(L * 100) + "% " + fx3(C) + " " + fx(H) + (a < 1 ? " / " + fx(a * 100) + "%" : "") + ")";
+  }
+  return a < 1 ? s.hex + alphaHex(a) : s.hex;
+}
+function sortedStops(l) { return [...l.stops].sort((a, b) => a.pos - b.pos); }
+function stopsCSS(l, fmt) {
+  const st = sortedStops(l), parts = [];
+  st.forEach((s, i) => {
+    parts.push(colorStr(s, fmt) + " " + fx(s.pos) + "%");
+    if (i < st.length - 1) {
+      const h = s.hint == null ? 50 : s.hint;
+      if (Math.abs(h - 50) > 0.5) parts.push(fx(st[i].pos + (st[i + 1].pos - st[i].pos) * h / 100) + "%");
+    }
+  });
+  return parts.join(", ");
+}
+function layerCSS(l, fmt, anim) {
+  const ic = interpCSS(l), rep = l.repeating ? "repeating-" : "";
+  const stops = stopsCSS(l, fmt);
+  if (l.type === "linear") {
+    const a = anim ? "calc(" + fx(l.angle) + "deg + var(--gt-a, 0deg))" : fx(l.angle) + "deg";
+    return rep + "linear-gradient(" + a + ic + ", " + stops + ")";
+  }
+  if (l.type === "radial") {
+    const size = l.size === "custom" ? (l.sizeCustom.trim() || "farthest-corner") : l.size;
+    const shape = l.size === "custom" ? "" : l.shape + " ";
+    return rep + "radial-gradient(" + shape + size + " at " + fx(l.x) + "% " + fx(l.y) + "%" + ic + ", " + stops + ")";
+  }
+  const f = anim ? "calc(" + fx(l.from) + "deg + var(--gt-a, 0deg))" : fx(l.from) + "deg";
+  return rep + "conic-gradient(from " + f + " at " + fx(l.x) + "% " + fx(l.y) + "%" + ic + ", " + stops + ")";
+}
+function grainURL(intensity) {
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'>" +
+    "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/>" +
+    "<feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 " + fx3(intensity) + " 0'/></filter>" +
+    "<rect width='240' height='240' filter='url(%23n)'/></svg>";
+  return 'url("data:image/svg+xml,' + svg.replace(/</g, "%3C").replace(/>/g, "%3E").replace(/#/g, "%23") + '")';
+}
+function vignetteCSS(v) {
+  const inner = Math.max(15, 58 - v * 0.3);
+  const alpha = v / 100 * 0.9;
+  return "radial-gradient(ellipse farthest-corner at 50% 50%, rgba(0,0,0,0) " + fx(inner) + "%, rgba(0,0,0," + fx3(alpha) + ") 100%)";
+}
+function filterCSS(st) {
+  const p = [];
+  if (st.hueRot) p.push("hue-rotate(" + fx(st.hueRot) + "deg)");
+  if (st.sat !== 100) p.push("saturate(" + fx(st.sat) + "%)");
+  if (st.bright !== 100) p.push("brightness(" + fx(st.bright) + "%)");
+  return p.join(" ");
+}
+function buildBackground(st, anim) {
+  const vis = st.layers.filter(l => l.visible);
+  const imgs = vis.map(l => layerCSS(l, st.fmt, anim && l.type !== "radial"));
+  const blends = vis.map(l => l.blend || "normal");
+  const tiles = vis.map(l => (l.tile && l.tile.trim()) ? l.tile.trim() : "auto");
+  if (st.vignette > 0) { imgs.unshift(vignetteCSS(st.vignette)); blends.unshift("normal"); tiles.unshift("auto"); }
+  if (st.grain > 0) { imgs.unshift(grainURL(st.grain / 100)); blends.unshift("overlay"); tiles.unshift("auto"); }
+  return { imgs, blends, tiles };
+}
+function cssText(st) {
+  const rot = st.aRot && st.layers.some(l => l.visible && l.type !== "radial");
+  const { imgs, blends, tiles } = buildBackground(st, rot);
+  const f = filterCSS(st);
+  const tiled = tiles.some(t => t !== "auto");
+  let out;
+  if (st.mode === "border") {
+    /* gradient border: opaque inner fill on padding-box, gradient on border-box */
+    out = "/* gradient border */\nborder: 10px solid transparent;\nborder-radius: 10px;\nbackground:\n  linear-gradient(" + st.bg + ", " + st.bg + ") padding-box,\n  " +
+      imgs.map(im => im + " border-box").join(",\n  ") + ";";
+    if (tiled && !st.aPan) out += "\nbackground-size: auto, " + tiles.join(", ") + ";";
+  } else {
+    out = "background-image:\n  " + imgs.join(",\n  ") + ";";
+    const hasAlpha = st.layers.some(l => l.visible && l.stops.some(s => (s.a == null ? 1 : s.a) < 1));
+    if (hasAlpha) out = "background-color: " + st.bg + ";\n" + out;
+    if (blends.some(b => b !== "normal")) out += "\nbackground-blend-mode: " + blends.join(", ") + ";";
+    if (tiled && !st.aPan) out += "\nbackground-size: " + tiles.join(", ") + ";";
+    if (st.mode === "text") out += "\n\n/* clip the background to the text */\n-webkit-background-clip: text;\nbackground-clip: text;\ncolor: transparent;";
+  }
+  if (f) out += "\nfilter: " + f + ";";
+  const anims = [], kf = [];
+  let pre = "";
+  if (rot) {
+    anims.push("gt-rotate " + st.aRotSpd + "s linear infinite");
+    pre = "@property --gt-a {\n  syntax: \"<angle>\";\n  inherits: false;\n  initial-value: 0deg;\n}\n";
+    kf.push("@keyframes gt-rotate {\n  to { --gt-a: 360deg; }\n}");
+  }
+  if (st.aPan) {
+    anims.push("gt-pan " + st.aPanSpd + "s linear infinite");
+    /* 0% -> 200% of a 200%-sized background = exactly one repeat period: loops forward seamlessly */
+    kf.push("@keyframes gt-pan {\n  from { background-position: 0% 50%; }\n  to { background-position: 200% 50%; }\n}");
+  }
+  if (st.aHue) {
+    anims.push("gt-hue " + st.aHueSpd + "s linear infinite");
+    kf.push("@keyframes gt-hue {\n  to { filter: " + (f ? f + " " : "") + "hue-rotate(360deg); }\n}");
+  }
+  if (anims.length) {
+    out += "\n\n/* animation */\n" + pre + ".your-element {\n" +
+      (st.aPan ? "  background-size: 200% 200%;\n" : "") +
+      "  animation: " + anims.join(", ") + ";\n}\n" + kf.join("\n");
+  }
+  return out;
+}
+
+/* sample-based color reader — handles hints + repeating, for canvas/SVG export
+   and for adding stops with a sampled color */
+function colorAtFactory(l) {
+  const st = sortedStops(l).map(s => {
+    const { r, g, b } = hexToRgb(s.hex);
+    return { pos: s.pos, r, g, b, a: s.a == null ? 1 : s.a, hint: s.hint == null ? 50 : s.hint };
+  });
+  if (!st.length) return () => ({ r: 0, g: 0, b: 0, a: 0 });
+  const first = st[0].pos, last = st[st.length - 1].pos, span = last - first;
+  return function (t) {
+    if (l.repeating && span > 0.0001) {
+      t = first + ((t - first) % span + span) % span;
+    }
+    if (t <= st[0].pos) return st[0];
+    if (t >= st[st.length - 1].pos) return st[st.length - 1];
+    for (let i = 0; i < st.length - 1; i++) {
+      const A = st[i], B = st[i + 1];
+      if (t >= A.pos && t <= B.pos) {
+        if (B.pos - A.pos < 0.0001) return B;
+        let p = (t - A.pos) / (B.pos - A.pos);
+        const h = clamp(A.hint, 1, 99) / 100;
+        const w = Math.pow(p, Math.log(0.5) / Math.log(h));
+        return {
+          r: A.r + (B.r - A.r) * w, g: A.g + (B.g - A.g) * w,
+          b: A.b + (B.b - A.b) * w, a: A.a + (B.a - A.a) * w
+        };
+      }
+    }
+    return st[st.length - 1];
+  };
+}
+/* ================================================================
+   history + persistence
+================================================================ */
+let history = [], future = [], histPending = false;
+function pushHistory() {
+  history.push(JSON.stringify(state));
+  if (history.length > 120) history.shift();
+  future = [];
+  updateUndoButtons();
+}
+function beginLive() { if (!histPending) { pushHistory(); histPending = true; } }
+function endLive() { if (histPending) { histPending = false; save(); renderAll(); } }
+function undo() {
+  if (!history.length) return;
+  future.push(JSON.stringify(state));
+  state = JSON.parse(history.pop());
+  histPending = false; save(); renderAll();
+}
+function redo() {
+  if (!future.length) return;
+  history.push(JSON.stringify(state));
+  state = JSON.parse(future.pop());
+  histPending = false; save(); renderAll();
+}
+function updateUndoButtons() {
+  $("#undoBtn").disabled = !history.length;
+  $("#redoBtn").disabled = !future.length;
+}
+function save() {
+  try { localStorage.setItem("gt-state", JSON.stringify(state)); } catch (e) {}
+}
+function encodeState() {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+}
+function decodeState(s) {
+  try { return JSON.parse(decodeURIComponent(escape(atob(s)))); } catch (e) { return null; }
+}
+/* a mutation helper: push history once, mutate, full re-render + save */
+function commit(fn) { pushHistory(); fn(); histPending = false; save(); renderAll(); }
+
+const activeLayer = () => state.layers[state.active];
+
+/* ================================================================
+   toast
+================================================================ */
+let toastTimer = 0;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1700);
+}
+function copyText(text, msg) {
+  const done = () => toast(msg || "copied");
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) { toast("copy failed"); }
+  ta.remove();
+}
+
+/* ================================================================
+   rendering
+================================================================ */
+const TYPE_LABEL = { linear: "linear", radial: "radial", conic: "conic" };
+
+function renderAll() {
+  state.active = clamp(state.active, 0, state.layers.length - 1);
+  state.sel = clamp(state.sel, 0, activeLayer().stops.length - 1);
+  renderLayers();
+  syncGeometry();
+  renderStops();
+  renderPreview();
+  renderCode();
+  renderToolbar();
+  updateUndoButtons();
+}
+/* cheap refresh used during drags — no DOM rebuild */
+function renderLive() {
+  renderPreview();
+  renderCode();
+  syncTrackLive();
+  syncGeometryValues();
+}
+
+function renderToolbar() {
+  $$("#modeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode)));
+  $("#bgIn").value = state.bg;
+  $("#fmtSel").value = state.fmt;
+  $("#grainIn").value = state.grain;   $("#grainVal").textContent = state.grain;
+  $("#vigIn").value = state.vignette;  $("#vigVal").textContent = state.vignette;
+  $("#hueIn").value = state.hueRot;    $("#hueVal").textContent = state.hueRot + "°";
+  $("#satIn").value = state.sat;       $("#satVal").textContent = state.sat + "%";
+  $("#briIn").value = state.bright;    $("#briVal").textContent = state.bright + "%";
+  $("#aRotChk").checked = state.aRot;  $("#aRotSpd").value = state.aRotSpd; $("#aRotSpdVal").textContent = state.aRotSpd + "s";
+  $("#aPanChk").checked = state.aPan;  $("#aPanSpd").value = state.aPanSpd; $("#aPanSpdVal").textContent = state.aPanSpd + "s";
+  $("#aHueChk").checked = state.aHue;  $("#aHueSpd").value = state.aHueSpd; $("#aHueSpdVal").textContent = state.aHueSpd + "s";
+  $$(".fxclear").forEach(b => { b.disabled = state[b.dataset.key] === +b.dataset.def; });
+}
+
+function renderLayers() {
+  const ul = $("#layers");
+  ul.innerHTML = "";
+  state.layers.forEach((l, i) => {
+    const li = document.createElement("li");
+    li.className = "layerrow" + (i === state.active ? " is-active" : "");
+    li.dataset.i = i;
+    const rep = l.repeating ? "rep-" : "";
+    li.innerHTML =
+      '<button class="lbtn eye" aria-pressed="' + l.visible + '" data-tip="Toggle visibility" aria-label="Toggle layer ' + (i + 1) + ' visibility">' + (l.visible ? ICONS.eye : ICONS.eyeOff) + "</button>" +
+      '<span class="lthumb" aria-hidden="true"></span>' +
+      '<span class="lname">' + String(i + 1).padStart(2, "0") + " " + rep + TYPE_LABEL[l.type] +
+      (l.blend !== "normal" ? " <small>&middot; " + l.blend + "</small>" : "") + "</span>" +
+      '<button class="lbtn up" data-tip="Move up" aria-label="Move layer up">' + ICONS.up + "</button>" +
+      '<button class="lbtn down" data-tip="Move down" aria-label="Move layer down">' + ICONS.down + "</button>" +
+      '<button class="lbtn dup" data-tip="Duplicate" aria-label="Duplicate layer">' + ICONS.dup + "</button>" +
+      '<button class="lbtn kill" data-tip="Delete layer" aria-label="Delete layer">' + ICONS.x + "</button>";
+    li.querySelector(".lthumb").style.backgroundImage = layerCSS(l, "hex", false);
+    ul.appendChild(li);
+  });
+}
+
+function showGeoRows() {
+  const t = activeLayer().type;
+  $$("[data-show]").forEach(el => {
+    el.classList.toggle("hide", !el.dataset.show.split(" ").includes(t));
+  });
+  const l = activeLayer();
+  $("#hueWrap").classList.toggle("hide", !(l.space !== "default" && POLAR.includes(l.space)));
+  $("#sizeCustomIn").classList.toggle("hide", l.size !== "custom");
+}
+function syncGeometryValues() {
+  const l = activeLayer();
+  $("#angleIn").value = Math.round(l.angle);
+  $("#fromIn").value = Math.round(l.from);
+  $("#posXNum").value = Math.round(l.x);
+  $("#posYNum").value = Math.round(l.y);
+  dialA.draw(); dialB.draw(); posPad.draw();
+}
+function syncGeometry() {
+  const l = activeLayer();
+  $$("#typeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.type === l.type)));
+  $("#repChk").checked = l.repeating;
+  $("#shapeSel").value = l.shape;
+  $("#sizeSel").value = l.size;
+  $("#sizeCustomIn").value = l.sizeCustom;
+  $("#spaceSel").value = l.space;
+  $("#hueSel").value = l.hue;
+  $("#blendSel").value = l.blend;
+  syncTileUI();
+  showGeoRows();
+  syncGeometryValues();
+}
+
+/* ---------- stops track + rows ---------- */
+function trackBackground(l) {
+  const g = "linear-gradient(90deg" + interpCSS(l) + ", " + stopsCSS(l, "hex") + ")";
+  return g + ", repeating-conic-gradient(var(--checker-a) 0 25%, var(--checker-b) 0 50%) 0 0 / 16px 16px";
+}
+function renderStops() {
+  const l = activeLayer();
+  const track = $("#track");
+  /* remember focus inside the track — the rebuild below destroys it */
+  const ae = document.activeElement;
+  const prevFocus = track.contains(ae) && ae !== track
+    ? { hint: ae.classList.contains("hint"), i: ae.dataset.i } : null;
+  track.style.background = trackBackground(l);
+  /* handles + hint diamonds — spans with tabindex, NOT buttons:
+     macOS skips buttons when tabbing, spans stay reachable */
+  track.innerHTML = "";
+  const st = sortedStops(l);
+  l.stops.forEach((s, i) => {
+    const h = document.createElement("span");
+    h.className = "handle" + (i === state.sel ? " is-sel" : "");
+    h.dataset.i = i;
+    h.tabIndex = 0;
+    h.style.left = s.pos + "%";
+    h.style.background = s.hex;
+    h.setAttribute("role", "slider");
+    h.setAttribute("aria-label", "Color stop " + (i + 1) + " position");
+    h.setAttribute("aria-valuemin", "0"); h.setAttribute("aria-valuemax", "100");
+    h.setAttribute("aria-valuenow", String(Math.round(s.pos)));
+    h.setAttribute("aria-valuetext", fx(s.pos) + "% " + s.hex);
+    track.appendChild(h);
+  });
+  for (let i = 0; i < st.length - 1; i++) {
+    const s = st[i];
+    const orig = l.stops.indexOf(s);
+    const d = document.createElement("span");
+    d.className = "hint";
+    d.dataset.i = orig;
+    d.tabIndex = 0;
+    const abs = s.pos + (st[i + 1].pos - s.pos) * (s.hint == null ? 50 : s.hint) / 100;
+    d.style.left = abs + "%";
+    d.setAttribute("role", "slider");
+    d.setAttribute("aria-label", "Midpoint between stop " + (i + 1) + " and " + (i + 2));
+    d.setAttribute("aria-valuemin", "2"); d.setAttribute("aria-valuemax", "98");
+    d.setAttribute("aria-valuenow", String(Math.round(s.hint == null ? 50 : s.hint)));
+    track.appendChild(d);
+  }
+  if (prevFocus) {
+    const el = prevFocus.hint
+      ? track.querySelector('.hint[data-i="' + prevFocus.i + '"]')
+      : track.querySelector('.handle[data-i="' + state.sel + '"]');
+    if (el) el.focus();
+  }
+  /* rows */
+  const rows = $("#stoprows");
+  rows.innerHTML = "";
+  l.stops.forEach((s, i) => {
+    const r = document.createElement("div");
+    r.className = "stoprow" + (i === state.sel ? " is-sel" : "");
+    r.dataset.i = i;
+    r.innerHTML =
+      '<input type="color" class="colin" value="' + s.hex + '" aria-label="Stop ' + (i + 1) + ' color">' +
+      '<input type="text" class="hexin" value="' + s.hex + '" aria-label="Stop ' + (i + 1) + ' color value" spellcheck="false">' +
+      (window.EyeDropper ? '<button class="lbtn pick" data-tip="Pick a color from anywhere on screen" aria-label="Eyedropper">' + ICONS.dropper + "</button>" : "") +
+      '<label class="mini" data-tip="Opacity of this stop (%)"><span class="lbl">&alpha;</span><input type="number" class="alphain" min="0" max="100" value="' + Math.round((s.a == null ? 1 : s.a) * 100) + '" aria-label="Stop ' + (i + 1) + ' opacity percent"></label>' +
+      '<label class="mini" data-tip="Position along the gradient (%)"><span class="lbl">pos</span><input type="number" class="posin" min="0" max="100" step="1" value="' + Math.round(s.pos) + '" aria-label="Stop ' + (i + 1) + ' position percent"></label>' +
+      '<button class="del" data-tip="Delete stop" aria-label="Delete stop ' + (i + 1) + '">' + ICONS.x + "</button>";
+    rows.appendChild(r);
+  });
+}
+function syncTrackLive() {
+  const l = activeLayer();
+  $("#track").style.background = trackBackground(l);
+  $$("#track .handle").forEach(h => {
+    const s = l.stops[+h.dataset.i];
+    if (!s) return;
+    h.style.left = s.pos + "%"; h.style.background = s.hex;
+    h.setAttribute("aria-valuenow", String(Math.round(s.pos)));
+  });
+  const st = sortedStops(l);
+  $$("#track .hint").forEach(d => {
+    const s = l.stops[+d.dataset.i];
+    const idx = st.indexOf(s);
+    if (idx < 0 || idx >= st.length - 1) return;
+    d.style.left = (s.pos + (st[idx + 1].pos - s.pos) * (s.hint == null ? 50 : s.hint) / 100) + "%";
+  });
+  $$("#stoprows .stoprow").forEach(r => {
+    const s = l.stops[+r.dataset.i];
+    if (!s) return;
+    r.querySelector(".posin").value = Math.round(s.pos);
+    r.querySelector(".colin").value = s.hex;
+  });
+}
+
+/* ---------- preview ---------- */
+function renderPreview() {
+  const anim = state.aRot && state.layers.some(l => l.visible && l.type !== "radial");
+  const { imgs, blends, tiles } = buildBackground(state, anim);
+  const bg = imgs.join(", "), bl = blends.join(", ");
+  let ts = tiles.join(", ");
+  if (state.aPan) ts = "200% 200%";
+  $$(".pv").forEach(p => p.classList.toggle("on", p.id === "pv-" + state.mode));
+
+  /* the little rule under the app title mirrors the live gradient */
+  const rule = $("#titleRule");
+  rule.style.backgroundImage = bg; rule.style.backgroundBlendMode = bl;
+
+  $("#stage").style.backgroundColor = state.bg;
+
+  const fill = $("#pv-fill");
+  fill.style.backgroundImage = bg; fill.style.backgroundBlendMode = bl; fill.style.backgroundSize = ts;
+
+  const txt = $("#pv-text span");
+  txt.style.backgroundImage = bg; txt.style.backgroundBlendMode = bl; txt.style.backgroundSize = ts;
+
+  const bb = $("#pv-border .borderbox");
+  /* per-layer " border-box" from the array — never string-splice joined CSS */
+  bb.style.background = "linear-gradient(" + state.bg + "," + state.bg + ") padding-box, " +
+    imgs.map(im => im + " border-box").join(", ");
+  bb.style.backgroundSize = "auto, " + (state.aPan ? imgs.map(() => "200% 200%") : tiles).join(", ");
+
+  /* center crosshair for radial/conic */
+  const l = activeLayer();
+  const showCross = state.mode === "fill" && (l.type === "radial" || l.type === "conic");
+  const ch = $("#crosshair");
+  ch.style.display = showCross ? "block" : "none";
+  $("#stage").classList.toggle("centerdrag", showCross);
+  if (showCross) {
+    ch.style.left = l.x + "%"; ch.style.top = l.y + "%";
+    ch.setAttribute("aria-valuenow", String(Math.round(l.x)));
+    ch.setAttribute("aria-valuetext", Math.round(l.x) + "% , " + Math.round(l.y) + "%");
+  }
+  startAnimLoop();
+  updateFavicon();
+}
+
+/* ---------- favicon mirrors the current gradient ---------- */
+const favCanvas = document.createElement("canvas");
+favCanvas.width = favCanvas.height = 64;
+let favTimer = 0, favLast = -1e9;
+function updateFavicon() {
+  /* leading-edge throttle: repaint immediately, then at most every 150ms */
+  clearTimeout(favTimer);
+  const wait = 150 - (performance.now() - favLast);
+  if (wait <= 0) drawFavicon();
+  else favTimer = setTimeout(drawFavicon, wait);
+}
+function drawFavicon() {
+  favLast = performance.now();
+  {
+    const ctx = favCanvas.getContext("2d");
+    ctx.clearRect(0, 0, 64, 64);
+    ctx.save();
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(2, 2, 60, 60, 14); else ctx.rect(2, 2, 60, 60);
+    ctx.clip();
+    ctx.fillStyle = state.bg || "#131311";
+    ctx.fillRect(0, 0, 64, 64);
+    const vis = state.layers.filter(l => l.visible);
+    for (let i = vis.length - 1; i >= 0; i--) {
+      ctx.globalCompositeOperation = (i === vis.length - 1 || vis[i].blend === "normal") ? "source-over" : vis[i].blend;
+      try { paintLayer(ctx, 64, 64, vis[i]); } catch (e) {}
+    }
+    ctx.globalCompositeOperation = "source-over";
+    ctx.restore();
+    try { $("#favicon").href = favCanvas.toDataURL("image/png"); } catch (e) {}
+  }
+}
+
+let animRAF = 0;
+function startAnimLoop() {
+  cancelAnimationFrame(animRAF);
+  const stageEl = $("#stage");
+  const els = [$("#pv-fill"), $("#pv-text span"), $("#pv-border .borderbox")];
+  const baseFilter = filterCSS(state);
+  stageEl.style.removeProperty("--gt-a");
+  els.forEach(el => { el.style.backgroundPosition = ""; el.style.filter = baseFilter; });
+  const rotOn = state.aRot && state.layers.some(l => l.visible && l.type !== "radial");
+  const panOn = !!state.aPan, hueOn = !!state.aHue;
+  if (!rotOn && !panOn && !hueOn) return;
+  const Tr = state.aRotSpd * 1000, Tp = state.aPanSpd * 1000, Th = state.aHueSpd * 1000;
+  const tick = t => {
+    if (rotOn) stageEl.style.setProperty("--gt-a", ((t % Tr) / Tr * 360).toFixed(1) + "deg");
+    if (panOn) {
+      const x = (t % Tp) / Tp * 200;   /* one full period of the 200% background: seamless forward loop */
+      els.forEach(el => { el.style.backgroundPosition = x.toFixed(2) + "% 50%"; });
+    }
+    if (hueOn) {
+      const fl = (baseFilter ? baseFilter + " " : "") + "hue-rotate(" + Math.round((t % Th) / Th * 360) + "deg)";
+      els.forEach(el => { el.style.filter = fl; });
+    }
+    animRAF = requestAnimationFrame(tick);
+  };
+  animRAF = requestAnimationFrame(tick);
+}
+
+/* ---------- code panel ---------- */
+let rawCSS = "";
+function renderCode() {
+  rawCSS = cssText(state);
+  let html = esc(rawCSS);
+  /* swatch chips + tint color tokens */
+  html = html.replace(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|oklch\([^)]*\)/g,
+    m => '<i class="sw" style="background:' + m + '"></i><span class="tok-c">' + m + "</span>");
+  html = html.replace(/(^|\n)([a-z-]+)(:)/g, (m, a, p, c) => a + '<span class="tok-n">' + p + "</span>" + c);
+  $("#code").innerHTML = html;
+}
+
+/* ================================================================
+   dial control
+================================================================ */
+function makeDial(el, get, set) {
+  let ticks = "";
+  for (let a = 0; a < 360; a += 15) {
+    const maj = a % 45 === 0;
+    const r1 = maj ? 28 : 31, r2 = 34.5;
+    const rad = a * Math.PI / 180;
+    ticks += '<line class="tick" stroke-width="' + (maj ? 1.6 : 0.8) + '" x1="' + (37 + r1 * Math.sin(rad)).toFixed(1) + '" y1="' + (37 - r1 * Math.cos(rad)).toFixed(1) +
+      '" x2="' + (37 + r2 * Math.sin(rad)).toFixed(1) + '" y2="' + (37 - r2 * Math.cos(rad)).toFixed(1) + '"/>';
+  }
+  el.innerHTML = '<svg viewBox="0 0 74 74" aria-hidden="true">' +
+    '<circle class="ring" cx="37" cy="37" r="26"/>' + ticks +
+    '<g class="rot" style="transform-origin:37px 37px"><line class="needle" x1="37" y1="37" x2="37" y2="14"/></g>' +
+    '<circle class="hub" cx="37" cy="37" r="3"/></svg>';
+  const rot = el.querySelector(".rot");
+  const api = { draw() {
+    rot.style.transform = "rotate(" + get() + "deg)";
+    el.setAttribute("aria-valuenow", String(Math.round(get())));
+    el.setAttribute("aria-valuetext", Math.round(get()) + " degrees");
+  } };
+  function fromEvent(e) {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let a = Math.atan2(e.clientX - cx, cy - e.clientY) * 180 / Math.PI;
+    a = (a % 360 + 360) % 360;
+    if (e.shiftKey) a = Math.round(a / 15) * 15;
+    return Math.round(a) % 360;
+  }
+  el.addEventListener("pointerdown", e => {
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    beginLive(); set(fromEvent(e)); renderLive();
+  });
+  el.addEventListener("pointermove", e => {
+    if (!el.hasPointerCapture || !el.hasPointerCapture(e.pointerId)) return;
+    set(fromEvent(e)); renderLive();
+  });
+  el.addEventListener("pointerup", () => endLive());
+  el.addEventListener("keydown", e => {
+    const step = e.shiftKey ? 15 : 1;
+    let v = null;
+    if (e.key === "ArrowRight" || e.key === "ArrowUp") v = get() + step;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") v = get() - step;
+    if (v == null) return;
+    e.preventDefault();
+    beginLive(); set((v % 360 + 360) % 360); renderLive(); endLive();
+  });
+  return api;
+}
+const dialA = makeDial($("#dialA"), () => activeLayer().angle, v => { activeLayer().angle = v; });
+const dialB = makeDial($("#dialB"), () => activeLayer().from, v => { activeLayer().from = v; });
+
+/* ================================================================
+   xy pad control (radial/conic center)
+================================================================ */
+function makePad(el, getX, getY, set) {
+  el.innerHTML = '<div class="paddot"></div>';
+  const dot = el.querySelector(".paddot");
+  const api = { draw() {
+    dot.style.left = getX() + "%";
+    dot.style.top = getY() + "%";
+    el.setAttribute("aria-valuetext", Math.round(getX()) + "% , " + Math.round(getY()) + "%");
+    el.setAttribute("aria-valuenow", String(Math.round(getX())));
+  } };
+  function fromEvent(e) {
+    const r = el.getBoundingClientRect();
+    let x = clamp((e.clientX - r.left) / r.width * 100, 0, 100);
+    let y = clamp((e.clientY - r.top) / r.height * 100, 0, 100);
+    if (e.shiftKey) { x = Math.round(x / 25) * 25; y = Math.round(y / 25) * 25; }
+    set(Math.round(x * 10) / 10, Math.round(y * 10) / 10);
+  }
+  el.addEventListener("pointerdown", e => {
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    beginLive(); fromEvent(e); renderLive();
+  });
+  el.addEventListener("pointermove", e => {
+    if (!el.hasPointerCapture || !el.hasPointerCapture(e.pointerId)) return;
+    fromEvent(e); renderLive();
+  });
+  el.addEventListener("pointerup", () => endLive());
+  el.addEventListener("keydown", e => {
+    const step = e.shiftKey ? 10 : 1;
+    const map = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    if (!map[e.key]) return;
+    e.preventDefault();
+    beginLive();
+    set(clamp(getX() + map[e.key][0], 0, 100), clamp(getY() + map[e.key][1], 0, 100));
+    renderLive(); endLive();
+  });
+  return api;
+}
+const posPad = makePad($("#posPad"),
+  () => activeLayer().x, () => activeLayer().y,
+  (x, y) => { const l = activeLayer(); l.x = x; l.y = y; });
+/* ================================================================
+   wiring — toolbar
+================================================================ */
+const WORDS = ["Hello world!", "¡Hola mundo!", "こんにちは世界", "Hej världen!", "Hallo Welt!"];
+$("#modeSeg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  state.mode = b.dataset.mode;
+  if (state.mode === "text") $("#pv-text span").textContent = WORDS[Math.floor(Math.random() * WORDS.length)];
+  save(); renderAll();
+});
+$("#undoBtn").addEventListener("click", undo);
+$("#redoBtn").addEventListener("click", redo);
+$("#randomBtn").addEventListener("click", () => commit(randomGradient));
+$("#bgIn").addEventListener("input", e => { beginLive(); state.bg = e.target.value; renderLive(); });
+$("#bgIn").addEventListener("change", endLive);
+$("#fmtSel").addEventListener("change", e => { state.fmt = e.target.value; save(); renderCode(); });
+
+/* ---------- effects ---------- */
+function fxSlider(id, valId, key, fmtFn) {
+  $(id).addEventListener("input", e => {
+    beginLive(); state[key] = +e.target.value;
+    $(valId).textContent = fmtFn(state[key]);
+    renderLive();
+  });
+  $(id).addEventListener("change", endLive);
+}
+fxSlider("#grainIn", "#grainVal", "grain", v => v);
+fxSlider("#vigIn", "#vigVal", "vignette", v => v);
+fxSlider("#hueIn", "#hueVal", "hueRot", v => v + "°");
+fxSlider("#satIn", "#satVal", "sat", v => v + "%");
+fxSlider("#briIn", "#briVal", "bright", v => v + "%");
+fxSlider("#aRotSpd", "#aRotSpdVal", "aRotSpd", v => v + "s");
+fxSlider("#aPanSpd", "#aPanSpdVal", "aPanSpd", v => v + "s");
+fxSlider("#aHueSpd", "#aHueSpdVal", "aHueSpd", v => v + "s");
+$("#aRotChk").addEventListener("change", e => commit(() => { state.aRot = e.target.checked; }));
+$("#aPanChk").addEventListener("change", e => commit(() => { state.aPan = e.target.checked; }));
+$("#aHueChk").addEventListener("change", e => commit(() => { state.aHue = e.target.checked; }));
+$$(".fxclear").forEach(b => {
+  b.innerHTML = ICONS.x;
+  b.addEventListener("click", () => {
+    const key = b.dataset.key, def = +b.dataset.def;
+    if (state[key] === def) return;
+    commit(() => { state[key] = def; });
+  });
+});
+$("#fxReset").addEventListener("click", () => commit(() => {
+  state.grain = 0; state.vignette = 0; state.hueRot = 0; state.sat = 100; state.bright = 100;
+  state.aRot = state.aPan = state.aHue = false;
+  state.aRotSpd = state.aPanSpd = state.aHueSpd = 8;
+}));
+
+/* ================================================================
+   wiring — geometry
+================================================================ */
+$("#typeSeg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  commit(() => { activeLayer().type = b.dataset.type; });
+});
+$("#repChk").addEventListener("change", e => commit(() => { activeLayer().repeating = e.target.checked; }));
+$("#angleIn").addEventListener("input", e => {
+  beginLive(); activeLayer().angle = ((+e.target.value || 0) % 360 + 360) % 360; renderLive();
+});
+$("#angleIn").addEventListener("change", endLive);
+$("#fromIn").addEventListener("input", e => {
+  beginLive(); activeLayer().from = ((+e.target.value || 0) % 360 + 360) % 360; renderLive();
+});
+$("#fromIn").addEventListener("change", endLive);
+[["#posXNum", "x"], ["#posYNum", "y"]].forEach(([sel, prop]) => {
+  $(sel).addEventListener("input", e => { beginLive(); activeLayer()[prop] = clamp(+e.target.value || 0, 0, 100); renderLive(); });
+  $(sel).addEventListener("change", endLive);
+});
+$("#shapeSel").addEventListener("change", e => commit(() => { activeLayer().shape = e.target.value; }));
+$("#sizeSel").addEventListener("change", e => commit(() => { activeLayer().size = e.target.value; }));
+$("#sizeCustomIn").addEventListener("change", e => commit(() => { activeLayer().sizeCustom = e.target.value; }));
+$("#spaceSel").addEventListener("change", e => commit(() => { activeLayer().space = e.target.value; }));
+$("#hueSel").addEventListener("change", e => commit(() => { activeLayer().hue = e.target.value; }));
+$("#blendSel").addEventListener("change", e => commit(() => { activeLayer().blend = e.target.value; }));
+
+/* ---------- tile (background-size) UI ---------- */
+function tileWH(l) {
+  const m = /^(\d+(?:\.\d+)?)px(?:\s+(\d+(?:\.\d+)?)px)?$/.exec((l.tile || "").trim());
+  if (!m) return null;
+  return { w: +m[1], h: m[2] ? +m[2] : +m[1] };
+}
+function tileLinked(l) {
+  const wh = tileWH(l);
+  return l.tileLink == null ? (!wh || wh.w === wh.h) : l.tileLink;
+}
+function syncTileUI() {
+  const l = activeLayer();
+  const on = !!(l.tile && l.tile.trim());
+  const wh = tileWH(l), linked = tileLinked(l);
+  $("#tileChk").checked = on;
+  $("#tileLinkBtn").classList.toggle("hide", !on);
+  $("#tileLinkBtn").setAttribute("aria-pressed", String(linked));
+  $("#tileWRow").classList.toggle("hide", !on);
+  $("#tileHRow").classList.toggle("hide", !on || linked);
+  $("#tileWLbl").textContent = linked ? "size" : "w";
+  const w = wh ? wh.w : 64, h = wh ? wh.h : 64;
+  $("#tileWIn").value = w; $("#tileWVal").textContent = Math.round(w) + "px";
+  $("#tileHIn").value = h; $("#tileHVal").textContent = Math.round(h) + "px";
+}
+$("#tileChk").addEventListener("change", e => commit(() => {
+  const l = activeLayer();
+  l.tile = e.target.checked ? (tileWH(l) ? l.tile : "64px 64px") : "";
+}));
+$("#tileLinkBtn").addEventListener("click", () => commit(() => {
+  const l = activeLayer();
+  const wh = tileWH(l) || { w: 64, h: 64 };
+  l.tileLink = !tileLinked(l);
+  if (l.tileLink) l.tile = wh.w + "px " + wh.w + "px";
+}));
+function tileSliderInput() {
+  beginLive();
+  const l = activeLayer();
+  const w = +$("#tileWIn").value;
+  const h = tileLinked(l) ? w : +$("#tileHIn").value;
+  l.tile = w + "px " + h + "px";
+  $("#tileWVal").textContent = w + "px";
+  $("#tileHVal").textContent = h + "px";
+  renderLive();
+}
+$("#tileWIn").addEventListener("input", tileSliderInput);
+$("#tileHIn").addEventListener("input", tileSliderInput);
+$("#tileWIn").addEventListener("change", endLive);
+$("#tileHIn").addEventListener("change", endLive);
+
+/* ================================================================
+   wiring — layers list
+================================================================ */
+$("#layers").addEventListener("click", e => {
+  const row = e.target.closest(".layerrow"); if (!row) return;
+  const i = +row.dataset.i;
+  const btn = e.target.closest(".lbtn");
+  if (!btn) { state.active = i; state.sel = 0; save(); renderAll(); return; }
+  if (btn.classList.contains("eye")) commit(() => { state.layers[i].visible = !state.layers[i].visible; });
+  else if (btn.classList.contains("up") && i > 0) commit(() => {
+    const [l] = state.layers.splice(i, 1); state.layers.splice(i - 1, 0, l);
+    if (state.active === i) state.active = i - 1; else if (state.active === i - 1) state.active = i;
+  });
+  else if (btn.classList.contains("down") && i < state.layers.length - 1) commit(() => {
+    const [l] = state.layers.splice(i, 1); state.layers.splice(i + 1, 0, l);
+    if (state.active === i) state.active = i + 1; else if (state.active === i + 1) state.active = i;
+  });
+  else if (btn.classList.contains("dup")) commit(() => {
+    state.layers.splice(i + 1, 0, deepCopy(state.layers[i])); state.active = i + 1;
+  });
+  else if (btn.classList.contains("kill")) {
+    if (state.layers.length === 1) { toast("keep at least one layer"); return; }
+    commit(() => { state.layers.splice(i, 1); state.active = clamp(state.active, 0, state.layers.length - 1); });
+  }
+});
+$("#addLayerBtn").addEventListener("click", () => commit(() => {
+  const nl = defaultLayer();
+  nl.stops = [stop(randHex(), 0, 0.85), stop(randHex(), 100, 0.85)];
+  nl.blend = state.layers.length ? "normal" : "normal";
+  state.layers.unshift(nl); state.active = 0; state.sel = 0;
+}));
+
+/* ================================================================
+   wiring — stop track (drag / add / hints / keyboard)
+================================================================ */
+const track = $("#track");
+let dragKind = null, dragIdx = -1;
+function trackPos(e) {
+  const r = track.getBoundingClientRect();
+  return clamp((e.clientX - r.left) / r.width * 100, 0, 100);
+}
+track.addEventListener("pointerdown", e => {
+  const h = e.target.closest(".handle"), d = e.target.closest(".hint");
+  if (h) {
+    dragKind = "stop"; dragIdx = +h.dataset.i;
+    state.sel = dragIdx;
+    h.focus();
+    $$("#track .handle").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === dragIdx));
+    $$("#stoprows .stoprow").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === dragIdx));
+    beginLive();
+    track.setPointerCapture(e.pointerId);
+  } else if (d) {
+    dragKind = "hint"; dragIdx = +d.dataset.i;
+    d.focus();
+    beginLive();
+    track.setPointerCapture(e.pointerId);
+  } else {
+    /* click empty track: add a stop with the sampled color */
+    const pos = trackPos(e);
+    const l = activeLayer();
+    const c = colorAtFactory(l)(pos);
+    commit(() => {
+      l.stops.push(stop(rgbToHex(c.r, c.g, c.b), Math.round(pos * 10) / 10, Math.round(c.a * 100) / 100));
+      state.sel = l.stops.length - 1;
+    });
+  }
+});
+track.addEventListener("pointermove", e => {
+  if (dragKind === null) return;
+  const l = activeLayer();
+  if (dragKind === "stop") {
+    l.stops[dragIdx].pos = Math.round(trackPos(e) * 10) / 10;
+  } else if (dragKind === "hint") {
+    const st = sortedStops(l), s = l.stops[dragIdx], i = st.indexOf(s);
+    if (i >= 0 && i < st.length - 1) {
+      const a = s.pos, b = st[i + 1].pos;
+      if (b - a > 0.01) s.hint = clamp(Math.round((trackPos(e) - a) / (b - a) * 100), 2, 98);
+    }
+  }
+  renderLive();
+});
+track.addEventListener("pointerup", () => { if (dragKind !== null) { dragKind = null; endLive(); } });
+track.addEventListener("keydown", e => {
+  const h = e.target.closest(".handle"), d = e.target.closest(".hint");
+  const l = activeLayer();
+  if (h) {
+    const i = +h.dataset.i, step = e.shiftKey ? 10 : 1;
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      commit(() => { l.stops[i].pos = clamp(l.stops[i].pos + (e.key === "ArrowRight" ? step : -step), 0, 100); state.sel = i; });
+    } else if (e.key === "Delete" || e.key === "Backspace") {
+      e.preventDefault(); removeStop(i);
+    }
+  } else if (d) {
+    const s = l.stops[+d.dataset.i];
+    if (!s) return;
+    const step = e.shiftKey ? 10 : 2;
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      commit(() => { s.hint = clamp((s.hint == null ? 50 : s.hint) + (e.key === "ArrowRight" ? step : -step), 2, 98); });
+    }
+  }
+});
+
+/* ================================================================
+   wiring — stop rows (delegated)
+================================================================ */
+function removeStop(i) {
+  const l = activeLayer();
+  if (l.stops.length <= 2) { toast("a gradient needs 2 stops"); return; }
+  commit(() => { l.stops.splice(i, 1); state.sel = clamp(state.sel, 0, l.stops.length - 1); });
+}
+const rowsEl = $("#stoprows");
+rowsEl.addEventListener("input", e => {
+  const row = e.target.closest(".stoprow"); if (!row) return;
+  const i = +row.dataset.i, s = activeLayer().stops[i];
+  if (!s) return;
+  beginLive();
+  if (e.target.classList.contains("colin")) { s.hex = e.target.value; row.querySelector(".hexin").value = e.target.value; }
+  else if (e.target.classList.contains("alphain")) s.a = clamp(+e.target.value || 0, 0, 100) / 100;
+  else if (e.target.classList.contains("posin")) s.pos = clamp(+e.target.value || 0, 0, 100);
+  renderLive();
+});
+rowsEl.addEventListener("change", e => {
+  const row = e.target.closest(".stoprow"); if (!row) return;
+  const i = +row.dataset.i, s = activeLayer().stops[i];
+  if (s && e.target.classList.contains("hexin")) {
+    const c = normColor(e.target.value.trim());
+    if (c) { s.hex = c.hex; if (c.a < 1) s.a = c.a; }
+    else toast("unrecognized color");
+  }
+  endLive();
+});
+rowsEl.addEventListener("click", e => {
+  const row = e.target.closest(".stoprow"); if (!row) return;
+  const i = +row.dataset.i;
+  if (e.target.closest(".del")) { removeStop(i); return; }
+  if (e.target.closest(".pick") && window.EyeDropper) {
+    new EyeDropper().open().then(res => {
+      commit(() => { activeLayer().stops[i].hex = res.sRGBHex; });
+    }).catch(() => {});
+    return;
+  }
+  if (state.sel !== i) {
+    state.sel = i;
+    $$("#stoprows .stoprow").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === i));
+    $$("#track .handle").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === i));
+  }
+});
+
+/* ---------- stop tools ---------- */
+$("#addStopBtn").addEventListener("click", () => {
+  const l = activeLayer(), st = sortedStops(l);
+  /* insert in the widest gap */
+  let gi = 0, gw = -1;
+  for (let i = 0; i < st.length - 1; i++) {
+    if (st[i + 1].pos - st[i].pos > gw) { gw = st[i + 1].pos - st[i].pos; gi = i; }
+  }
+  const pos = st.length > 1 ? (st[gi].pos + st[gi + 1].pos) / 2 : 50;
+  const c = colorAtFactory(l)(pos);
+  commit(() => {
+    l.stops.push(stop(rgbToHex(c.r, c.g, c.b), Math.round(pos), Math.round(c.a * 100) / 100));
+    state.sel = l.stops.length - 1;
+  });
+});
+$("#revBtn").addEventListener("click", () => commit(() => {
+  const l = activeLayer(), st = sortedStops(l), n = st.length;
+  l.stops = st.map((s, i) => {
+    const src = st[n - 1 - i];
+    const hintSrc = n - 2 - i >= 0 ? st[n - 2 - i] : null;
+    return stop(src.hex, Math.round((100 - src.pos) * 10) / 10, src.a,
+      hintSrc ? 100 - (hintSrc.hint == null ? 50 : hintSrc.hint) : 50);
+  });
+}));
+$("#evenBtn").addEventListener("click", () => commit(() => {
+  const l = activeLayer(), st = sortedStops(l), n = st.length;
+  st.forEach((s, i) => { s.pos = n === 1 ? 50 : Math.round(i / (n - 1) * 1000) / 10; });
+  l.stops = st;
+}));
+$("#posterBtn").addEventListener("click", () => {
+  const nRaw = prompt("Number of hard bands (2–16):", "6");
+  if (nRaw == null) return;
+  const n = clamp(parseInt(nRaw, 10) || 6, 2, 16);
+  const l = activeLayer(), at = colorAtFactory(l), out = [];
+  for (let i = 0; i < n; i++) {
+    const a = i / n * 100, b = (i + 1) / n * 100;
+    const c = at((a + b) / 2);
+    const hex = rgbToHex(c.r, c.g, c.b), al = Math.round(c.a * 100) / 100;
+    out.push(stop(hex, Math.round(a * 10) / 10, al), stop(hex, Math.round(b * 10) / 10, al));
+  }
+  commit(() => { l.stops = out; l.repeating = false; state.sel = 0; });
+});
+
+/* ================================================================
+   wiring — crosshair (radial/conic center) on the preview
+================================================================ */
+const stage = $("#stage"), cross = $("#crosshair");
+function stagePos(e) {
+  const r = stage.getBoundingClientRect();
+  return {
+    x: clamp((e.clientX - r.left) / r.width * 100, 0, 100),
+    y: clamp((e.clientY - r.top) / r.height * 100, 0, 100)
+  };
+}
+function centerDrag(e) {
+  const l = activeLayer();
+  if (l.type !== "radial" && l.type !== "conic") return;
+  const p = stagePos(e);
+  l.x = Math.round(p.x * 10) / 10; l.y = Math.round(p.y * 10) / 10;
+  renderLive(); renderPreview();
+}
+let crossDragging = false;
+[cross, $("#pv-fill")].forEach(el => {
+  el.addEventListener("pointerdown", e => {
+    const l = activeLayer();
+    if (state.mode !== "fill" || (l.type !== "radial" && l.type !== "conic")) return;
+    e.preventDefault();
+    crossDragging = true; beginLive();
+    el.setPointerCapture(e.pointerId);
+    centerDrag(e);
+  });
+  el.addEventListener("pointermove", e => { if (crossDragging) centerDrag(e); });
+  el.addEventListener("pointerup", () => { if (crossDragging) { crossDragging = false; endLive(); } });
+});
+cross.addEventListener("keydown", e => {
+  const l = activeLayer(), step = e.shiftKey ? 10 : 1;
+  const map = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+  if (!map[e.key]) return;
+  e.preventDefault();
+  commit(() => { l.x = clamp(l.x + map[e.key][0], 0, 100); l.y = clamp(l.y + map[e.key][1], 0, 100); });
+  cross.focus();
+});
+
+/* ================================================================
+   presets + random
+================================================================ */
+function randHex() {
+  return oklchHex(0.55 + Math.random() * 0.3, 0.1 + Math.random() * 0.14, Math.random() * 360);
+}
+function buildPresets() {
+  const grid = $("#presets");
+  PRESETS.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.className = "preset"; b.dataset.i = i;
+    b.setAttribute("aria-label", "Load preset: " + p.name);
+    const tmpState = Object.assign(defaultState(), { layers: p.layers, grain: p.grain || 0 });
+    const { imgs, blends, tiles } = buildBackground(tmpState, false);
+    b.innerHTML = '<span class="pthumb" style="background-image:' + esc(imgs.join(", ")) +
+      ";background-blend-mode:" + blends.join(", ") + ";background-size:" + tiles.join(", ") +
+      '"></span><span class="pname">' + p.name + "</span>";
+    grid.appendChild(b);
+  });
+  grid.addEventListener("click", e => {
+    const b = e.target.closest(".preset"); if (!b) return;
+    const p = PRESETS[+b.dataset.i];
+    commit(() => {
+      state.layers = deepCopy(p.layers);
+      state.grain = p.grain || 0;
+      state.vignette = 0; state.hueRot = 0; state.sat = 100; state.bright = 100;
+      state.aRot = state.aPan = state.aHue = false;
+      state.active = 0; state.sel = 0;
+    });
+    toast(p.name + " loaded");
+  });
+}
+function randomGradient() {
+  const baseH = Math.random() * 360;
+  const scheme = Math.floor(Math.random() * 4);
+  let hues;
+  if (scheme === 0) hues = [baseH, baseH + 28 + Math.random() * 34, baseH + 70 + Math.random() * 30];        /* analogous */
+  else if (scheme === 1) hues = [baseH, baseH + 168 + Math.random() * 24];                                    /* complementary */
+  else if (scheme === 2) hues = [baseH, baseH + 120, baseH + 240];                                            /* triadic */
+  else hues = [baseH, baseH, baseH];                                                                          /* monochrome */
+  const n = hues.length;
+  const stops = hues.map((h, i) => {
+    const L = scheme === 3 ? 0.3 + 0.55 * i / Math.max(1, n - 1) : 0.6 + Math.random() * 0.25;
+    const C = scheme === 3 ? 0.05 + Math.random() * 0.08 : 0.12 + Math.random() * 0.12;
+    return stop(oklchHex(L, C, (h % 360 + 360) % 360), Math.round(i / Math.max(1, n - 1) * 100));
+  });
+  const roll = Math.random();
+  const l = defaultLayer({
+    type: roll < 0.62 ? "linear" : roll < 0.82 ? "radial" : "conic",
+    angle: Math.floor(Math.random() * 72) * 5,
+    from: Math.floor(Math.random() * 72) * 5,
+    x: Math.round(20 + Math.random() * 60), y: Math.round(20 + Math.random() * 60),
+    space: Math.random() < 0.5 ? "oklab" : "oklch",
+    stops
+  });
+  state.layers = [l]; state.active = 0; state.sel = 0;
+  state.grain = 0; state.vignette = 0;
+}
+/* ================================================================
+   color normalization (any CSS color -> hex + alpha) via canvas
+================================================================ */
+const ncCanvas = document.createElement("canvas");
+ncCanvas.width = ncCanvas.height = 1;
+const ncCtx = ncCanvas.getContext("2d", { willReadFrequently: true });
+function normColor(str) {
+  if (!str) return null;
+  ncCtx.fillStyle = "#000"; ncCtx.fillStyle = str;
+  const v1 = ncCtx.fillStyle;
+  ncCtx.fillStyle = "#fff"; ncCtx.fillStyle = str;
+  if (v1 !== ncCtx.fillStyle) return null;      /* invalid: sentinel survived */
+  ncCtx.clearRect(0, 0, 1, 1);
+  ncCtx.fillRect(0, 0, 1, 1);
+  const d = ncCtx.getImageData(0, 0, 1, 1).data;
+  return { hex: rgbToHex(d[0], d[1], d[2]), a: Math.round(d[3] / 255 * 100) / 100 };
+}
+
+/* ================================================================
+   import parser
+================================================================ */
+const DIR_ANGLE = { "top": 0, "top right": 45, "right top": 45, "right": 90, "bottom right": 135, "right bottom": 135,
+  "bottom": 180, "bottom left": 225, "left bottom": 225, "left": 270, "top left": 315, "left top": 315 };
+const POS_KW = { left: 0, right: 100, top: 0, bottom: 100, center: 50 };
+function parseAngleToken(tok) {
+  const m = /^(-?[\d.]+)(deg|grad|rad|turn)$/.exec(tok);
+  if (!m) return null;
+  const v = parseFloat(m[1]);
+  const f = { deg: 1, grad: 0.9, rad: 180 / Math.PI, turn: 360 }[m[2]];
+  return ((v * f) % 360 + 360) % 360;
+}
+function parsePct(tok, axis) {
+  if (tok in POS_KW) return POS_KW[tok];
+  const m = /^(-?[\d.]+)%$/.exec(tok);
+  return m ? parseFloat(m[1]) : null;
+}
+function parseGradientFn(str) {
+  const m = /^(repeating-)?(linear|radial|conic)-gradient\(([\s\S]*)\)$/.exec(str.trim());
+  if (!m) return null;
+  const l = defaultLayer({ type: m[2], repeating: !!m[1], stops: [] });
+  const segs = splitTop(m[3], ",");
+  let stopSegs = segs;
+
+  /* is the first segment a prelude? (doesn't begin with a parseable color) */
+  const firstTok = splitTop(segs[0], " ")[0];
+  const looksLikeColor = !!normColor(firstTok) && parseAngleToken(firstTok) == null && !/^-?[\d.]/.test(firstTok);
+  if (segs.length && !looksLikeColor && !normColor(firstTok)) {
+    stopSegs = segs.slice(1);
+    const toks = splitTop(segs[0], " ");
+    for (let i = 0; i < toks.length; i++) {
+      const t = toks[i].toLowerCase();
+      const ang = parseAngleToken(t);
+      if (ang != null && l.type === "linear") { l.angle = ang; continue; }
+      if (t === "to") {
+        const words = [];
+        while (i + 1 < toks.length && (toks[i + 1] in POS_KW) && toks[i + 1] !== "center") words.push(toks[++i]);
+        const key = words.join(" ");
+        if (key in DIR_ANGLE) l.angle = DIR_ANGLE[key];
+        continue;
+      }
+      if (t === "from" && i + 1 < toks.length) { const a = parseAngleToken(toks[++i]); if (a != null) l.from = a; continue; }
+      if (t === "at") {
+        const px = i + 1 < toks.length ? parsePct(toks[i + 1], "x") : null;
+        if (px != null) { l.x = px; i++; }
+        const py = i + 1 < toks.length ? parsePct(toks[i + 1], "y") : null;
+        if (py != null) { l.y = py; i++; }
+        continue;
+      }
+      if (t === "circle" || t === "ellipse") { l.shape = t; continue; }
+      if (/^(closest|farthest)-(side|corner)$/.test(t)) { l.size = t; continue; }
+      if (/^-?[\d.]+(px|%|em|rem|vw|vh)$/.test(t)) {
+        l.size = "custom";
+        l.sizeCustom = (l.sizeCustom ? l.sizeCustom + " " : "") + t;
+        continue;
+      }
+      if (t === "in" && i + 1 < toks.length) {
+        l.space = toks[++i].toLowerCase();
+        if (i + 2 < toks.length && toks[i + 2].toLowerCase() === "hue") { l.hue = toks[i + 1].toLowerCase(); i += 2; }
+        continue;
+      }
+    }
+  }
+
+  /* stops */
+  const raw = [];   /* {hex,a,pos|null} */
+  const hints = []; /* {afterIdx, abs} */
+  for (const seg of stopSegs) {
+    const toks = splitTop(seg, " ");
+    if (toks.length === 1) {
+      const p = parsePct(toks[0]);
+      if (p != null && raw.length) { hints.push({ afterIdx: raw.length - 1, abs: p }); continue; }
+    }
+    const c = normColor(toks[0]);
+    if (!c) continue;
+    const positions = toks.slice(1).map(t => parsePct(t)).filter(p => p != null);
+    if (positions.length === 0) raw.push({ hex: c.hex, a: c.a, pos: null });
+    else positions.forEach(p => raw.push({ hex: c.hex, a: c.a, pos: p }));
+  }
+  if (raw.length < 2) return null;
+  /* auto-position: first->0, last->100, interpolate the rest */
+  if (raw[0].pos == null) raw[0].pos = 0;
+  if (raw[raw.length - 1].pos == null) raw[raw.length - 1].pos = 100;
+  let iA = 0;
+  for (let i = 1; i < raw.length; i++) {
+    if (raw[i].pos == null) continue;
+    raw[i].pos = Math.max(raw[i].pos, raw[iA].pos);   /* CSS clamps to previous */
+    const gap = i - iA;
+    for (let k = 1; k < gap; k++) raw[iA + k].pos = raw[iA].pos + (raw[i].pos - raw[iA].pos) * k / gap;
+    iA = i;
+  }
+  l.stops = raw.map(r => stop(r.hex, Math.round(r.pos * 10) / 10, r.a));
+  hints.forEach(h => {
+    const A = l.stops[h.afterIdx], B = l.stops[h.afterIdx + 1];
+    if (A && B && B.pos - A.pos > 0.01) A.hint = clamp(Math.round((h.abs - A.pos) / (B.pos - A.pos) * 100), 2, 98);
+  });
+  return l;
+}
+function importCSS(text) {
+  let t = text.trim();
+  /* pull out property values if a whole rule/blocks were pasted */
+  const im = /background(?:-image)?\s*:\s*([^;]+)/i.exec(t);
+  if (im) t = im[1];
+  t = t.replace(/\s+/g, " ").replace(/;\s*$/, "").trim();
+  const parts = splitTop(t, ",");
+  const layers = [];
+  let skipped = 0;
+  for (const p of parts) {
+    if (/^url\(/i.test(p)) { skipped++; continue; }
+    const l = parseGradientFn(p);
+    if (l) layers.push(l); else if (p) skipped++;
+  }
+  if (!layers.length) return false;
+  const bm = /background-blend-mode\s*:\s*([^;]+)/i.exec(text);
+  if (bm) splitTop(bm[1], ",").forEach((b, i) => { if (layers[i]) layers[i].blend = b.trim(); });
+  const bs = /background-size\s*:\s*([^;]+)/i.exec(text);
+  if (bs) splitTop(bs[1], ",").forEach((s, i) => { if (layers[i] && s.trim() !== "auto") layers[i].tile = s.trim(); });
+  commit(() => {
+    state.layers = layers; state.active = 0; state.sel = 0; state.grain = 0;
+  });
+  toast(skipped ? "imported (" + skipped + " part(s) skipped)" : "imported");
+  return true;
+}
+const dlg = $("#importDlg");
+$("#importBtn").addEventListener("click", () => { $("#importTa").value = ""; dlg.showModal(); $("#importTa").focus(); });
+$("#importCancel").addEventListener("click", () => dlg.close());
+$("#importGo").addEventListener("click", () => {
+  if (importCSS($("#importTa").value)) dlg.close();
+  else toast("couldn't parse that");
+});
+
+/* ================================================================
+   output actions
+================================================================ */
+$("#copyCssBtn").addEventListener("click", () => copyText(rawCSS, "css copied"));
+$("#copyValBtn").addEventListener("click", () => {
+  const { imgs } = buildBackground(state, false);
+  copyText(imgs.join(", "), "value copied");
+});
+$("#shareBtn").addEventListener("click", () => {
+  const url = location.href.split("#")[0] + "#g=" + encodeState();
+  history_replaceHash("#g=" + encodeState());
+  copyText(url, "link copied");
+});
+function history_replaceHash(h) { try { window.history.replaceState(null, "", h); } catch (e) {} }
+
+/* ---------- PNG export ---------- */
+function radialRadii(l, w, h) {
+  const cx = l.x / 100 * w, cy = l.y / 100 * h;
+  const dl = cx, dr = w - cx, dt = cy, db = h - cy;
+  const circle = l.shape === "circle";
+  let rx, ry;
+  if (l.size === "custom") {
+    const toks = l.sizeCustom.trim().split(/\s+/).filter(Boolean);
+    const px = (t, dim) => {
+      const m = /^(-?[\d.]+)(px|%)?$/.exec(t);
+      if (!m) return 100;
+      return m[2] === "%" ? parseFloat(m[1]) / 100 * dim : parseFloat(m[1]);
+    };
+    rx = toks.length ? px(toks[0], w) : 100;
+    ry = toks.length > 1 ? px(toks[1], h) : rx;
+  } else if (l.size === "closest-side") {
+    rx = Math.min(dl, dr); ry = Math.min(dt, db);
+    if (circle) rx = ry = Math.min(rx, ry);
+  } else if (l.size === "farthest-side") {
+    rx = Math.max(dl, dr); ry = Math.max(dt, db);
+    if (circle) rx = ry = Math.max(rx, ry);
+  } else {
+    const closest = l.size === "closest-corner";
+    const sx = closest ? Math.min(dl, dr) : Math.max(dl, dr);
+    const sy = closest ? Math.min(dt, db) : Math.max(dt, db);
+    if (circle) {
+      const corners = [[dl, dt], [dl, db], [dr, dt], [dr, db]].map(([a, b]) => Math.hypot(a, b));
+      rx = ry = closest ? Math.min(...corners) : Math.max(...corners);
+    } else {
+      const k = sy < 0.001 ? 1 : sx / Math.max(sy, 0.001);
+      const ax = closest ? Math.min(dl, dr) : Math.max(dl, dr);
+      const ay = closest ? Math.min(dt, db) : Math.max(dt, db);
+      ry = Math.sqrt(ay * ay + (ax / Math.max(k, 0.001)) * (ax / Math.max(k, 0.001)));
+      rx = k * ry;
+    }
+  }
+  return { cx, cy, rx: Math.max(rx, 0.5), ry: Math.max(ry, 0.5) };
+}
+function sampledStops(grad, l, span) {
+  /* add ~512 samples for hint/repeat fidelity */
+  const at = colorAtFactory(l);
+  const N = 512;
+  for (let i = 0; i <= N; i++) {
+    const t = i / N;
+    const c = at(t * (span == null ? 100 : span));
+    grad.addColorStop(t, "rgba(" + Math.round(c.r) + "," + Math.round(c.g) + "," + Math.round(c.b) + "," + fx3(clamp(c.a, 0, 1)) + ")");
+  }
+}
+function paintLayer(ctx, w, h, l) {
+  let grad;
+  if (l.type === "linear") {
+    const rad = l.angle * Math.PI / 180;
+    const vx = Math.sin(rad), vy = -Math.cos(rad);
+    const len = Math.abs(w * vx) + Math.abs(h * vy);
+    grad = ctx.createLinearGradient(w / 2 - vx * len / 2, h / 2 - vy * len / 2, w / 2 + vx * len / 2, h / 2 + vy * len / 2);
+    sampledStops(grad, l);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+  } else if (l.type === "radial") {
+    const { cx, cy, rx, ry } = radialRadii(l, w, h);
+    grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rx);
+    sampledStops(grad, l);
+    ctx.save();
+    ctx.translate(cx, cy); ctx.scale(1, ry / rx); ctx.translate(-cx, -cy);
+    ctx.fillStyle = grad;
+    /* fill generously; the scale distorts the fill rect, so oversize it */
+    const pad = Math.max(w, h) * (rx / Math.max(ry, 0.5) + 2);
+    ctx.fillRect(-pad, -pad, w + 2 * pad, h + 2 * pad);
+    ctx.restore();
+  } else {
+    if (!ctx.createConicGradient) { toast("conic export needs a newer browser"); return; }
+    grad = ctx.createConicGradient((l.from - 90) * Math.PI / 180, l.x / 100 * w, l.y / 100 * h);
+    sampledStops(grad, l);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, w, h);
+  }
+}
+function download(name, url) {
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+$("#pngBtn").addEventListener("click", () => {
+  const r = stage.getBoundingClientRect();
+  const w = Math.round(r.width * 2) || 1600, h = Math.round(r.height * 2) || 1000;
+  const cv = document.createElement("canvas");
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d");
+  const vis = state.layers.filter(l => l.visible);
+  /* CSS paints the FIRST layer on top — draw in reverse with each layer's blend */
+  for (let i = vis.length - 1; i >= 0; i--) {
+    ctx.globalCompositeOperation = (i === vis.length - 1 || vis[i].blend === "normal") ? "source-over" : vis[i].blend;
+    paintLayer(ctx, w, h, vis[i]);
+  }
+  if (state.vignette > 0) {
+    ctx.globalCompositeOperation = "source-over";
+    const inner = Math.max(15, 58 - state.vignette * 0.3) / 100;
+    const alpha = state.vignette / 100 * 0.9;
+    const rx = w / 2 * Math.SQRT2, ry = h / 2 * Math.SQRT2;
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, rx);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(inner, "rgba(0,0,0,0)");
+    g.addColorStop(1, "rgba(0,0,0," + fx3(alpha) + ")");
+    ctx.save();
+    ctx.translate(w / 2, h / 2); ctx.scale(1, ry / rx); ctx.translate(-w / 2, -h / 2);
+    ctx.fillStyle = g;
+    ctx.fillRect(-w, -h, 3 * w, 3 * h);
+    ctx.restore();
+  }
+  if (state.grain > 0) {
+    const noise = document.createElement("canvas");
+    noise.width = w; noise.height = h;
+    const nctx = noise.getContext("2d");
+    const img = nctx.createImageData(w, h);
+    const amt = state.grain / 100;
+    for (let p = 0; p < img.data.length; p += 4) img.data[p + 3] = Math.random() * 255 * amt;
+    nctx.putImageData(img, 0, 0);
+    ctx.globalCompositeOperation = "overlay";
+    ctx.drawImage(noise, 0, 0);
+  }
+  ctx.globalCompositeOperation = "source-over";
+  let outCv = cv;
+  const f = filterCSS(state);
+  if (f) {
+    /* apply the CSS filter effects to the whole composite */
+    const fc = document.createElement("canvas");
+    fc.width = w; fc.height = h;
+    const fctx = fc.getContext("2d");
+    fctx.filter = f;
+    fctx.drawImage(cv, 0, 0);
+    if (fctx.filter !== "none") outCv = fc;   /* unsupported => filter stays "none" */
+  }
+  download("gradient.png", outCv.toDataURL("image/png"));
+  toast("png saved (srgb approximation)");
+});
+
+/* ---------- SVG export ---------- */
+$("#svgBtn").addEventListener("click", () => {
+  const W = 1600, H = 1000;
+  const vis = state.layers.filter(l => l.visible);
+  const paintable = vis.filter(l => l.type !== "conic");
+  if (!paintable.length) { toast("svg export: conic layers not supported"); return; }
+  if (paintable.length < vis.length) toast("conic layer(s) skipped in svg");
+  let defs = "", rects = "";
+  /* SVG paints first element at the bottom — reverse of CSS layer order */
+  [...paintable].reverse().forEach((l, idx) => {
+    const id = "g" + idx;
+    const at = colorAtFactory(l);
+    let stopsXml = "";
+    const N = 64;
+    for (let i = 0; i <= N; i++) {
+      const c = at(i / N * 100);
+      stopsXml += '<stop offset="' + fx3(i / N) + '" stop-color="' + rgbToHex(c.r, c.g, c.b) + '" stop-opacity="' + fx3(clamp(c.a, 0, 1)) + '"/>';
+    }
+    if (l.type === "linear") {
+      const rad = l.angle * Math.PI / 180;
+      const vx = Math.sin(rad), vy = -Math.cos(rad);
+      const len = Math.abs(W * vx) + Math.abs(H * vy);
+      defs += '<linearGradient id="' + id + '" gradientUnits="userSpaceOnUse" x1="' + fx(W / 2 - vx * len / 2) + '" y1="' + fx(H / 2 - vy * len / 2) +
+        '" x2="' + fx(W / 2 + vx * len / 2) + '" y2="' + fx(H / 2 + vy * len / 2) + '">' + stopsXml + "</linearGradient>";
+    } else {
+      const { cx, cy, rx, ry } = radialRadii(l, W, H);
+      defs += '<radialGradient id="' + id + '" gradientUnits="userSpaceOnUse" cx="' + fx(cx) + '" cy="' + fx(cy) + '" r="' + fx(rx) +
+        '" gradientTransform="translate(' + fx(cx) + ' ' + fx(cy) + ') scale(1 ' + fx3(ry / rx) + ') translate(' + fx(-cx) + ' ' + fx(-cy) + ')">' +
+        stopsXml + "</radialGradient>";
+    }
+    const blend = l.blend !== "normal" ? ' style="mix-blend-mode:' + l.blend + '"' : "";
+    rects += '<rect width="' + W + '" height="' + H + '" fill="url(#' + id + ')"' + blend + "/>";
+  });
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '"><defs>' + defs + "</defs>" + rects + "</svg>";
+  download("gradient.svg", "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg));
+  toast("svg saved");
+});
+
+/* ================================================================
+   keyboard shortcuts
+================================================================ */
+document.addEventListener("keydown", e => {
+  const tag = (e.target.tagName || "").toLowerCase();
+  const typing = tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+    if (typing) return;
+    e.preventDefault();
+    e.shiftKey ? redo() : undo();
+    return;
+  }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === "r" || e.key === "R") { commit(randomGradient); toast("randomized"); }
+  else if (e.key === "c" || e.key === "C") copyText(rawCSS, "css copied");
+});
+
+/* ================================================================
+   init
+================================================================ */
+(function init() {
+  let loaded = null;
+  const hm = /#g=([A-Za-z0-9+/=]+)/.exec(location.hash);
+  if (hm) loaded = decodeState(hm[1]);
+  if (!loaded) {
+    try { loaded = JSON.parse(localStorage.getItem("gt-state")); } catch (e) {}
+  }
+  if (loaded && Array.isArray(loaded.layers) && loaded.layers.length) {
+    const base = defaultState();
+    state = Object.assign(base, loaded);
+    state.layers = loaded.layers.map(l => defaultLayer(l));
+  }
+  if (!["fill", "text", "border"].includes(state.mode)) state.mode = "fill";
+  if (!/^#[0-9a-fA-F]{6}$/.test(state.bg || "")) state.bg = "#131311";
+  /* migrate older saves where `animate` was a boolean or a single-mode string */
+  if (typeof state.animate === "boolean") state.animate = state.animate ? "rotate" : "none";
+  if (typeof state.animate === "string") {
+    const sp = clamp(Math.round(+state.animSpeed) || 8, 2, 30);
+    state.aRot = state.animate === "rotate";
+    state.aPan = state.animate === "pan";
+    state.aHue = state.animate === "hue";
+    state.aRotSpd = state.aPanSpd = state.aHueSpd = sp;
+    delete state.animate; delete state.animSpeed;
+  }
+  state.aRot = !!state.aRot; state.aPan = !!state.aPan; state.aHue = !!state.aHue;
+  ["aRotSpd", "aPanSpd", "aHueSpd"].forEach(k => { state[k] = clamp(Math.round(+state[k]) || 8, 2, 30); });
+  state.grain = clamp(+state.grain || 0, 0, 100);
+  state.vignette = clamp(+state.vignette || 0, 0, 100);
+  state.hueRot = clamp(+state.hueRot || 0, 0, 360);
+  state.sat = state.sat == null ? 100 : clamp(+state.sat || 0, 0, 200);
+  state.bright = state.bright == null ? 100 : clamp(+state.bright || 0, 0, 200);
+  buildPresets();
+  renderAll();
+})();
+</script>
+</body>
+</html>
