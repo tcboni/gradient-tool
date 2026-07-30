@@ -229,7 +229,7 @@ input[type="range"]::-moz-range-thumb{width:11px;height:11px;border-radius:2px;b
   display:flex;align-items:center;gap:7px;padding:5px 7px;
   border:1px solid var(--line);border-radius:4px;background:var(--panel2);cursor:pointer;
 }
-.layerrow.is-active{border-color:var(--acc);box-shadow:inset 2px 0 0 var(--acc)}
+.layerrow.is-active{border-color:var(--muted)}
 .layerrow .lthumb{width:34px;height:22px;border-radius:3px;outline:1px solid var(--line2);flex:none;
   background-color:var(--well)}
 .layerrow .lname{flex:1;font-size:11px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -247,11 +247,24 @@ input[type="range"]::-moz-range-thumb{width:11px;height:11px;border-radius:2px;b
 }
 .handle{
   position:absolute;top:calc(100% + 3px);width:16px;height:20px;margin-left:-8px;
-  border:1.5px solid var(--ink);border-radius:0 0 3px 3px;background:#888;padding:0;
-  clip-path:polygon(50% 0,100% 30%,100% 100%,0 100%,0 30%);
-  touch-action:none;
+  border:0;background:none;padding:0;touch-action:none;
 }
-.handle.is-sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.handle::before{
+  content:"";position:absolute;inset:0;background:var(--c,#888);
+  border-radius:0 0 3px 3px;
+  clip-path:polygon(50% 0,100% 30%,100% 100%,0 100%,0 30%);
+}
+.handle.is-sel{z-index:1;outline:1.5px solid var(--ink);outline-offset:1px}
+@supports (border-shape: polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%)){
+  .handle{
+    background:var(--c,#888);
+    border:1.5px solid var(--muted);
+    border-shape:polygon(50% 0%, 100% 30%, 100% 100%, 0% 100%, 0% 30%);
+  }
+  .handle::before{content:none}
+  .handle.is-sel{outline:0;border-color:var(--ink)}
+}
+.handle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .hint{
   position:absolute;top:-7px;width:10px;height:10px;margin-left:-5px;padding:0;
   background:var(--panel);border:1.5px solid var(--muted);transform:rotate(45deg);
@@ -263,7 +276,7 @@ input[type="range"]::-moz-range-thumb{width:11px;height:11px;border-radius:2px;b
   display:grid;grid-template-columns:34px minmax(70px,1fr) auto auto auto auto;gap:7px;align-items:center;
   padding:4px 6px;border:1px solid var(--line);border-radius:4px;
 }
-.stoprow.is-sel{border-color:var(--acc)}
+.stoprow.is-sel{border-color:var(--muted);background:var(--panel2)}
 .stoprow input[type="color"]{
   width:34px;height:26px;padding:0;border:1px solid var(--line2);border-radius:3px;background:none;cursor:pointer;
 }
@@ -1136,7 +1149,7 @@ function renderStops() {
     h.dataset.i = i;
     h.tabIndex = 0;
     h.style.left = s.pos + "%";
-    h.style.background = s.hex;
+    h.style.setProperty("--c", s.hex);
     h.setAttribute("role", "slider");
     h.setAttribute("aria-label", "Color stop " + (i + 1) + " position");
     h.setAttribute("aria-valuemin", "0"); h.setAttribute("aria-valuemax", "100");
@@ -1188,7 +1201,7 @@ function syncTrackLive() {
   $$("#track .handle").forEach(h => {
     const s = l.stops[+h.dataset.i];
     if (!s) return;
-    h.style.left = s.pos + "%"; h.style.background = s.hex;
+    h.style.left = s.pos + "%"; h.style.setProperty("--c", s.hex);
     h.setAttribute("aria-valuenow", String(Math.round(s.pos)));
   });
   const st = sortedStops(l);
@@ -1578,6 +1591,12 @@ $("#addLayerBtn").addEventListener("click", () => commit(() => {
    wiring — stop track (drag / add / hints / keyboard)
 ================================================================ */
 const track = $("#track");
+function selectStop(i) {
+  if (!activeLayer().stops[i]) return;
+  state.sel = i;
+  $$("#track .handle").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === i));
+  $$("#stoprows .stoprow").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === i));
+}
 let dragKind = null, dragIdx = -1;
 function trackPos(e) {
   const r = track.getBoundingClientRect();
@@ -1587,10 +1606,8 @@ track.addEventListener("pointerdown", e => {
   const h = e.target.closest(".handle"), d = e.target.closest(".hint");
   if (h) {
     dragKind = "stop"; dragIdx = +h.dataset.i;
-    state.sel = dragIdx;
+    selectStop(dragIdx);
     h.focus();
-    $$("#track .handle").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === dragIdx));
-    $$("#stoprows .stoprow").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === dragIdx));
     beginLive();
     track.setPointerCapture(e.pointerId);
   } else if (d) {
@@ -1624,6 +1641,10 @@ track.addEventListener("pointermove", e => {
   renderLive();
 });
 track.addEventListener("pointerup", () => { if (dragKind !== null) { dragKind = null; endLive(); } });
+track.addEventListener("focusin", e => {
+  const h = e.target.closest(".handle");
+  if (h) selectStop(+h.dataset.i);
+});
 track.addEventListener("keydown", e => {
   const h = e.target.closest(".handle"), d = e.target.closest(".hint");
   const l = activeLayer();
@@ -1685,11 +1706,11 @@ rowsEl.addEventListener("click", e => {
     }).catch(() => {});
     return;
   }
-  if (state.sel !== i) {
-    state.sel = i;
-    $$("#stoprows .stoprow").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === i));
-    $$("#track .handle").forEach(x => x.classList.toggle("is-sel", +x.dataset.i === i));
-  }
+  selectStop(i);
+});
+rowsEl.addEventListener("focusin", e => {
+  const row = e.target.closest(".stoprow");
+  if (row) selectStop(+row.dataset.i);
 });
 
 /* ---------- stop tools ---------- */
