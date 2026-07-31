@@ -2014,10 +2014,8 @@ $("#copyValBtn").addEventListener("click", () => {
 });
 $("#shareBtn").addEventListener("click", () => {
   const url = location.href.split("#")[0] + "#g=" + encodeState();
-  history_replaceHash("#g=" + encodeState());
   copyText(url, "link copied");
 });
-function history_replaceHash(h) { try { window.history.replaceState(null, "", h); } catch (e) {} }
 
 /* ---------- PNG export ---------- */
 function radialRadii(l, w, h) {
@@ -2219,7 +2217,10 @@ document.addEventListener("keydown", e => {
 (function init() {
   let loaded = null;
   const hm = /#g=([A-Za-z0-9+/=]+)/.exec(location.hash);
-  if (hm) loaded = decodeState(hm[1]);
+  if (hm) {
+    loaded = decodeState(hm[1]);
+    try { window.history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+  }
   if (!loaded) {
     try { loaded = JSON.parse(localStorage.getItem("gt-state")); } catch (e) {}
   }
